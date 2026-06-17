@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Austrian Grand Prix</title>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@700;900&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a1f16; font-family: 'Barlow Condensed', sans-serif; color: #c9d2d6; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+  .checker { position: fixed; top: 0; left: 0; right: 0; height: 6px; background: repeating-linear-gradient(90deg,#fff 0,#fff 14px,#000 14px,#000 28px); }
+  .checker-b { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: repeating-linear-gradient(90deg,#fff 0,#fff 14px,#000 14px,#000 28px); }
+  .flag { font-size: 48px; margin-bottom: 8px; }
+  h1 { font-family: 'Bitter', serif; font-size: 36px; font-weight: 900; color: #eef2f0; text-align: center; margin-bottom: 4px; }
+  .sub { font-size: 14px; color: rgba(201,210,214,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 40px; text-align: center; }
+  .cards { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 400px; }
+  .card { display: block; text-decoration: none; border-radius: 12px; border: 1.5px solid rgba(201,210,214,0.15); background: rgba(255,255,255,0.04); padding: 20px 24px; transition: all 0.18s; }
+  .card:active, .card:hover { background: rgba(255,255,255,0.08); border-color: rgba(201,210,214,0.35); transform: scale(0.99); }
+  .card-top { height: 4px; border-radius: 2px; margin-bottom: 14px; }
+  .card-title { font-family: 'Bitter', serif; font-size: 20px; font-weight: 700; color: #eef2f0; margin-bottom: 4px; }
+  .card-desc { font-size: 13px; color: rgba(201,210,214,0.5); }
+</style>
+</head>
+<body>
+<div class="checker"></div>
+<div class="checker-b"></div>
+<div class="flag">🇦🇹</div>
+<h1>Austrian Grand Prix</h1>
+<div class="sub">Red Bull Ring · Spielberg · June 19–23, 2026</div>
+<div class="cards">
+  <a class="card" href="austria_kiosk.html">
+    <div class="card-top" style="background:#d7263d;"></div>
+    <div class="card-title">🏁 Self-Report Kiosk</div>
+    <div class="card-desc">Log your contributions · iPad floor station</div>
+  </a>
+  <a class="card" href="austria_scoreboard.html">
+    <div class="card-top" style="background:#c8a84b;"></div>
+    <div class="card-title">📺 Championship Scoreboard</div>
+    <div class="card-desc">Constructor & driver standings · BOH display</div>
+  </a>
+  <a class="card" href="austria_manager_dashboard.html">
+    <div class="card-top" style="background:#229971;"></div>
+    <div class="card-title">🏆 Manager Dashboard</div>
+    <div class="card-desc">PIN required · Manager use only</div>
+  </a>
+</div>
+</body>
+</html>

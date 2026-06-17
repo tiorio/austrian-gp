@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Austrian GP — Manager Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700;900&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a1f16;
+    --bg2: #0f2a1e;
+    --bg3: #142f22;
+    --silver: #c9d2d6;
+    --silver-light: #eef2f0;
+    --red: #d7263d;
+    --red-dark: #a51d2f;
+    --gold: #c8a84b;
+    --green: #2d9e5f;
+    --amber: #d97706;
+    --blue: #3b82f6;
+    --purple: #8b5cf6;
+    --white: #ffffff;
+    --muted: rgba(201,210,214,0.45);
+    --border: rgba(201,210,214,0.14);
+    --card: rgba(255,255,255,0.04);
+    --card-hover: rgba(255,255,255,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100dvh; overflow: hidden; background: var(--bg); font-family: 'Barlow Condensed', sans-serif; color: var(--silver); }
+
+  /* CHECKER STRIPS */
+  .checker { position: fixed; top: 0; left: 0; right: 0; height: 5px; z-index: 200;
+    background: repeating-linear-gradient(90deg, #fff 0px, #fff 12px, #000 12px, #000 24px); opacity: 0.8; }
+
+  /* PIN SCREEN */
+  #pin-screen {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--bg); padding: 24px;
+  }
+  .pin-logo { font-size: 40px; margin-bottom: 8px; }
+  .pin-title { font-family: 'Bitter', serif; font-size: 22px; font-weight: 900; color: var(--silver-light); margin-bottom: 4px; }
+  .pin-sub { font-size: 13px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 32px; }
+  .pin-dots { display: flex; gap: 14px; margin-bottom: 32px; }
+  .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); background: transparent; transition: all 0.15s; }
+  .pin-dot.filled { background: var(--red); border-color: var(--red); }
+  .pin-error { color: var(--red); font-size: 13px; height: 20px; text-align: center; margin-bottom: 12px; letter-spacing: 0.06em; }
+  .pin-keypad { display: grid; grid-template-columns: repeat(3, 72px); gap: 10px; }
+  .pin-key {
+    height: 64px; border-radius: 12px; border: 1.5px solid var(--border);
+    background: var(--card); color: var(--silver-light); font-family: 'Bitter', serif;
+    font-size: 24px; font-weight: 700; cursor: pointer; transition: all 0.12s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pin-key:active { background: var(--card-hover); transform: scale(0.95); border-color: var(--silver); }
+  .pin-key.del { font-size: 18px; color: var(--muted); }
+  .pin-key.del:active { color: var(--red); }
+
+  /* MAIN SHELL */
+  #main-shell { position: fixed; inset: 0; display: none; flex-direction: column; }
+  #main-shell.visible { display: flex; }
+
+  /* TOP BAR */
+  .top-bar {
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; background: var(--bg2); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; margin-top: 5px;
+  }
+  .top-bar-title { font-family: 'Bitter', serif; font-size: 16px; font-weight: 900; color: var(--silver-light); }
+  .top-bar-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .top-badge { background: var(--red); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;}50%{opacity:0.4;} }
+
+  /* CONTENT AREA */
+  .content { flex: 1; overflow-y: auto; padding: 16px; -webkit-overflow-scrolling: touch; }
+
+  /* HOME CARDS */
+  .home-cards { display: flex; flex-direction: column; gap: 12px; }
+  .home-card {
+    border-radius: 12px; border: 1.5px solid var(--border);
+    background: var(--card); overflow: hidden; cursor: pointer; transition: all 0.18s;
+  }
+  .home-card:active { background: var(--card-hover); transform: scale(0.99); }
+  .card-top-bar { height: 5px; }
+  .card-body { padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+  .card-icon { font-size: 28px; }
+  .card-info { flex: 1; }
+  .card-title { font-family: 'Bitter', serif; font-size: 17px; font-weight: 700; color: var(--silver-light); }
+  .card-desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .card-badge { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-family: 'Bitter', serif; font-size: 18px; font-weight: 900; color: var(--silver-light); }
+  .card-arrow { color: var(--muted); font-size: 20px; }
+
+  /* SECTION VIEWS */
+  .section-view { display: none; }
+  .section-view.active { display: block; }
+
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .section-back { background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 14px; cursor: pointer; padding: 4px 0; display: flex; align-items: center; gap: 4px; }
+  .section-back:active { color: var(--silver); }
+  .section-title { font-family: 'Bitter', serif; font-size: 20px; font-weight: 900; color: var(--silver-light); }
+
+  /* PR ALERTS */
+  .pr-item {
+    background: var(--card); border: 1.5px solid rgba(215,38,61,0.35); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 10px; position: relative;
+  }
+  .pr-item.acknowledged { opacity: 0.45; border-color: var(--border); }
+  .pr-badge-sm { background: var(--red); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 6px; }
+  .pr-driver { font-family: 'Bitter', serif; font-size: 17px; font-weight: 700; color: var(--silver-light); }
+  .pr-cat { font-size: 14px; color: var(--silver); margin-top: 2px; }
+  .pr-numbers { display: flex; gap: 16px; margin-top: 8px; }
+  .pr-num-block { }
+  .pr-num-val { font-family: 'Bitter', serif; font-size: 22px; font-weight: 900; color: var(--silver-light); }
+  .pr-num-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .pr-meta { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .pr-ack-btn {
+    margin-top: 10px; padding: 8px 16px; border-radius: 8px;
+    background: rgba(215,38,61,0.15); border: 1.5px solid rgba(215,38,61,0.4);
+    color: var(--red); font-family: 'Barlow Condensed', sans-serif; font-size: 14px;
+    font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: all 0.18s;
+  }
+  .pr-ack-btn.done { background: var(--card); border-color: var(--border); color: var(--muted); }
+
+  /* STANDINGS */
+  .standings-bracket-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .bracket-tab-btn {
+    padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+    background: var(--card); color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: 0.06em;
+  }
+  .bracket-tab-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+  .standings-row {
+    display: grid; grid-template-columns: 28px 1fr 50px; gap: 8px; align-items: center;
+    padding: 10px 12px; border-radius: 10px; background: var(--card); border: 1px solid var(--border);
+    margin-bottom: 6px; cursor: pointer; transition: all 0.15s;
+  }
+  .standings-row:active { background: var(--card-hover); }
+  .standings-row.p1 { border-color: var(--gold); }
+  .standings-pos { font-family: 'Bitter', serif; font-size: 16px; font-weight: 900; color: var(--muted); text-align: center; }
+  .standings-row.p1 .standings-pos { color: var(--gold); }
+  .standings-name { font-family: 'Bitter', serif; font-size: 15px; color: var(--silver-light); }
+  .standings-team { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .standings-pts { font-family: 'Bitter', serif; font-size: 18px; font-weight: 900; color: var(--silver-light); text-align: right; }
+
+  /* DRILL-DOWN SHEET */
+  #drill-sheet {
+    position: fixed; inset: 0; z-index: 80; display: none;
+    background: rgba(0,0,0,0.6); align-items: flex-end;
+  }
+  #drill-sheet.visible { display: flex; }
+  .drill-content {
+    width: 100%; background: var(--bg2); border-radius: 20px 20px 0 0;
+    border-top: 1px solid var(--border); padding: 20px 16px 40px;
+    max-height: 80dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  .drill-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+  .drill-title { font-family: 'Bitter', serif; font-size: 20px; font-weight: 900; color: var(--silver-light); margin-bottom: 4px; }
+  .drill-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .drill-stat-row { display: grid; grid-template-columns: 1fr auto 55px; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .drill-stat-name { font-size: 14px; color: var(--silver); }
+  .drill-stat-qty { font-size: 14px; color: var(--muted); text-align: right; }
+  .drill-stat-pts { font-family: 'Bitter', serif; font-size: 16px; font-weight: 700; color: var(--silver-light); text-align: right; }
+  .drill-total { font-family: 'Bitter', serif; font-size: 22px; font-weight: 900; color: var(--silver-light); margin-top: 14px; }
+  .drill-total-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .drill-member-row {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .drill-member-row:active { opacity: 0.7; }
+
+  /* FLAG QUEUE */
+  .flag-item {
+    background: var(--card); border: 1.5px solid rgba(217,119,6,0.35); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 10px;
+  }
+  .flag-item.voided { opacity: 0.4; border-color: var(--border); }
+  .flag-type-badge { display: inline-block; background: rgba(217,119,6,0.2); color: var(--amber); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 10px; margin-bottom: 6px; }
+  .flag-driver { font-family: 'Bitter', serif; font-size: 16px; color: var(--silver-light); }
+  .flag-detail { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .flag-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .flag-btn {
+    flex: 1; padding: 8px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: var(--card); color: var(--silver); font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; transition: all 0.15s;
+  }
+  .flag-btn.approve:active { background: rgba(45,158,95,0.2); border-color: var(--green); color: var(--green); }
+  .flag-btn.void:active { background: rgba(215,38,61,0.2); border-color: var(--red); color: var(--red); }
+
+  /* DAY CONTROL */
+  .day-status-card { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 20px 16px; margin-bottom: 14px; }
+  .day-status-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .day-status-val { font-family: 'Bitter', serif; font-size: 28px; font-weight: 900; color: var(--silver-light); }
+  .day-status-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .day-nav { display: flex; gap: 10px; margin-bottom: 14px; }
+  .day-nav-btn { flex: 1; padding: 12px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--card); color: var(--silver); font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .day-nav-btn:active { background: var(--card-hover); }
+  .day-nav-btn:disabled { opacity: 0.35; cursor: default; }
+  .day-open-btn {
+    width: 100%; padding: 18px; border-radius: 12px; border: none;
+    font-family: 'Bitter', serif; font-size: 20px; font-weight: 900;
+    cursor: pointer; transition: all 0.18s; letter-spacing: 0.03em;
+  }
+  .day-open-btn.open { background: var(--green); color: #fff; }
+  .day-open-btn.close { background: var(--red); color: #fff; }
+  .day-open-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+  /* CONFIRM SHEET */
+  #confirm-sheet {
+    position: fixed; inset: 0; z-index: 90; display: none;
+    background: rgba(0,0,0,0.7); align-items: flex-end;
+  }
+  #confirm-sheet.visible { display: flex; }
+  .confirm-content {
+    width: 100%; background: var(--bg2); border-radius: 20px 20px 0 0;
+    border-top: 1px solid var(--border); padding: 24px 16px 40px;
+  }
+  .confirm-title-sm { font-family: 'Bitter', serif; font-size: 20px; font-weight: 900; color: var(--silver-light); margin-bottom: 8px; }
+  .confirm-body { font-size: 15px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-cancel { flex: 1; padding: 14px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--card); color: var(--silver); font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .confirm-go { flex: 1; padding: 14px; border-radius: 10px; border: none; background: var(--red); color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; }
+
+  /* ENTRY LOG */
+  .log-filters { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
+  .log-filter-btn {
+    padding: 4px 12px; border-radius: 20px; border: 1.5px solid var(--border);
+    background: var(--card); color: var(--muted); font-size: 13px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; transition: all 0.15s;
+  }
+  .log-filter-btn.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+  .log-item {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 6px; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .log-item.flagged { border-color: rgba(217,119,6,0.4); }
+  .log-item.voided { opacity: 0.4; }
+  .log-info { flex: 1; min-width: 0; }
+  .log-driver { font-family: 'Bitter', serif; font-size: 14px; color: var(--silver-light); }
+  .log-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .log-pts { font-family: 'Bitter', serif; font-size: 18px; font-weight: 900; color: var(--silver-light); flex-shrink: 0; }
+  .log-flag { background: rgba(217,119,6,0.2); color: var(--amber); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px; margin-top: 3px; display: inline-block; }
+  .log-voided { background: rgba(215,38,61,0.15); color: var(--red); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px; margin-top: 3px; display: inline-block; }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; }
+
+  /* TEAM COLOR DOT */
+  .tdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+
+  /* SEPARATOR */
+  .sep { height: 1px; background: var(--border); margin: 12px 0; }
+</style>
+</head>
+<body>
+<div class="checker"></div>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+  <div class="pin-logo">🇦🇹</div>
+  <div class="pin-title">Austrian Grand Prix</div>
+  <div class="pin-sub">Manager Dashboard</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-keypad">
+    <div class="pin-key" onclick="pinPress('1')">1</div>
+    <div class="pin-key" onclick="pinPress('2')">2</div>
+    <div class="pin-key" onclick="pinPress('3')">3</div>
+    <div class="pin-key" onclick="pinPress('4')">4</div>
+    <div class="pin-key" onclick="pinPress('5')">5</div>
+    <div class="pin-key" onclick="pinPress('6')">6</div>
+    <div class="pin-key" onclick="pinPress('7')">7</div>
+    <div class="pin-key" onclick="pinPress('8')">8</div>
+    <div class="pin-key" onclick="pinPress('9')">9</div>
+    <div class="pin-key" style="visibility:hidden;"></div>
+    <div class="pin-key" onclick="pinPress('0')">0</div>
+    <div class="pin-key del" onclick="pinBack()">⌫</div>
+  </div>
+</div>
+
+<!-- MAIN SHELL -->
+<div id="main-shell">
+  <div class="top-bar">
+    <div>
+      <div class="top-bar-title" id="top-title">🇦🇹 Austrian Grand Prix</div>
+      <div class="top-bar-sub" id="top-sub">Manager Dashboard</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="live-dot"></div>
+      <span class="top-badge" id="top-day-badge">Day 1</span>
+    </div>
+  </div>
+
+  <div class="content" id="main-content">
+
+    <!-- HOME VIEW -->
+    <div class="section-view active" id="view-home">
+      <div class="home-cards">
+
+        <!-- PR Alerts -->
+        <div class="home-card" onclick="openSection('pr')">
+          <div class="card-top-bar" style="background:var(--red);"></div>
+          <div class="card-body">
+            <div class="card-icon">🏅</div>
+            <div class="card-info">
+              <div class="card-title">PR Alerts</div>
+              <div class="card-desc">Personal records to call out on the floor</div>
+            </div>
+            <div class="card-badge" id="pr-count-badge" style="border-color:rgba(215,38,61,0.4);color:var(--red);">3</div>
+            <div class="card-arrow">›</div>
+          </div>
+        </div>
+
+        <!-- Standings -->
+        <div class="home-card" onclick="openSection('standings')">
+          <div class="card-top-bar" style="background:var(--blue);"></div>
+          <div class="card-body">
+            <div class="card-icon">🏆</div>
+            <div class="card-info">
+              <div class="card-title">Standings</div>
+              <div class="card-desc">Constructor & driver drill-downs</div>
+            </div>
+            <div class="card-arrow">›</div>
+          </div>
+        </div>
+
+        <!-- Day Control -->
+        <div class="home-card" onclick="openSection('day')">
+          <div class="card-top-bar" style="background:var(--green);"></div>
+          <div class="card-body">
+            <div class="card-icon">🏁</div>
+            <div class="card-info">
+              <div class="card-title">Day Control</div>
+              <div class="card-desc" id="day-ctrl-desc">Day 1 · Open</div>
+            </div>
+            <div class="card-arrow">›</div>
+          </div>
+        </div>
+
+        <!-- Flag Queue -->
+        <div class="home-card" onclick="openSection('flags')">
+          <div class="card-top-bar" style="background:var(--amber);"></div>
+          <div class="card-body">
+            <div class="card-icon">🚩</div>
+            <div class="card-info">
+              <div class="card-title">Flag Queue</div>
+              <div class="card-desc">Review suspicious entries</div>
+            </div>
+            <div class="card-badge" id="flag-count-badge" style="border-color:rgba(217,119,6,0.4);color:var(--amber);">2</div>
+            <div class="card-arrow">›</div>
+          </div>
+        </div>
+
+        <!-- Entry Log -->
+        <div class="home-card" onclick="openSection('log')">
+          <div class="card-top-bar" style="background:var(--purple);"></div>
+          <div class="card-body">
+            <div class="card-icon">📋</div>
+            <div class="card-info">
+              <div class="card-title">Entry Log</div>
+              <div class="card-desc">All submissions, timestamped</div>
+            </div>
+            <div class="card-arrow">›</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PR ALERTS VIEW -->
+    <div class="section-view" id="view-pr">
+      <div class="section-header">
+        <button class="section-back" onclick="goHome()">← Back</button>
+        <div class="section-title">PR Alerts</div>
+      </div>
+      <div id="pr-list"></div>
+    </div>
+
+    <!-- STANDINGS VIEW -->
+    <div class="section-view" id="view-standings">
+      <div class="section-header">
+        <button class="section-back" onclick="goHome()">← Back</button>
+        <div class="section-title">Standings</div>
+      </div>
+      <div class="standings-bracket-tabs" id="standings-tabs">
+        <div class="bracket-tab-btn active" onclick="switchStandingsTab('constructors', this)">Constructors</div>
+        <div class="bracket-tab-btn" onclick="switchStandingsTab('PZ', this)">Product Zone</div>
+        <div class="bracket-tab-btn" onclick="switchStandingsTab('GB', this)">Genius Bar</div>
+        <div class="bracket-tab-btn" onclick="switchStandingsTab('Forum', this)">Forum</div>
+        <div class="bracket-tab-btn" onclick="switchStandingsTab('Ops', this)">Ops</div>
+      </div>
+      <div id="standings-list"></div>
+    </div>
+
+    <!-- DAY CONTROL VIEW -->
+    <div class="section-view" id="view-day">
+      <div class="section-header">
+        <button class="section-back" onclick="goHome()">← Back</button>
+        <div class="section-title">Day Control</div>
+      </div>
+      <div class="day-status-card">
+        <div class="day-status-label">Current Day</div>
+        <div class="day-status-val" id="day-status-val">Day 1 — Practice & Qualifying</div>
+        <div class="day-status-sub" id="day-status-sub">Status: Open · Kiosk accepting entries</div>
+      </div>
+      <div class="day-nav">
+        <button class="day-nav-btn" onclick="navDay(-1)" id="prev-day-btn" disabled>← Prev Day</button>
+        <button class="day-nav-btn" onclick="navDay(1)" id="next-day-btn">Next Day →</button>
+      </div>
+      <button class="day-open-btn close" id="day-toggle-btn" onclick="confirmDayToggle()">
+        Close Day 1
+      </button>
+      <div class="sep"></div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6;">
+        <strong style="color:var(--silver);">Open</strong> — kiosk accepts new entries.<br>
+        <strong style="color:var(--silver);">Close</strong> — kiosk locked; entries submitted after close are queued.<br>
+        Always confirm before closing — no undo without reopening.
+      </div>
+    </div>
+
+    <!-- FLAG QUEUE VIEW -->
+    <div class="section-view" id="view-flags">
+      <div class="section-header">
+        <button class="section-back" onclick="goHome()">← Back</button>
+        <div class="section-title">Flag Queue</div>
+      </div>
+      <div id="flag-list"></div>
+    </div>
+
+    <!-- ENTRY LOG VIEW -->
+    <div class="section-view" id="view-log">
+      <div class="section-header">
+        <button class="section-back" onclick="goHome()">← Back</button>
+        <div class="section-title">Entry Log</div>
+      </div>
+      <div class="log-filters">
+        <div class="log-filter-btn active" onclick="filterLog('all', this)">All</div>
+        <div class="log-filter-btn" onclick="filterLog('PZ', this)">Product Zone</div>
+        <div class="log-filter-btn" onclick="filterLog('GB', this)">Genius Bar</div>
+        <div class="log-filter-btn" onclick="filterLog('Forum', this)">Forum</div>
+        <div class="log-filter-btn" onclick="filterLog('Ops', this)">Ops</div>
+        <div class="log-filter-btn" onclick="filterLog('flagged', this)">Flagged</div>
+      </div>
+      <div id="log-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DRILL-DOWN SHEET -->
+<div id="drill-sheet" onclick="closeDrill(event)">
+  <div class="drill-content" id="drill-content">
+    <div class="drill-handle"></div>
+    <div id="drill-inner"></div>
+  </div>
+</div>
+
+<!-- CONFIRM SHEET -->
+<div id="confirm-sheet">
+  <div class="confirm-content">
+    <div class="drill-handle"></div>
+    <div class="confirm-title-sm" id="confirm-title-sm">Are you sure?</div>
+    <div class="confirm-body" id="confirm-body">This action will change the day status.</div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="confirm-go" id="confirm-go-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== CONFIG =====================
+const CORRECT_PIN = '0825';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxoFKqfKifXlryGg99H4hwRDPaw0yBMWjGNuNjX3tYcvoxrkz6Y6N7QNud1A4OJmAqY/exec';
+
+// ===================== PIN =====================
+let pinInput = '';
+function pinPress(d) {
+  if (pinInput.length >= 4) return;
+  pinInput += d;
+  updatePinDots();
+  if (pinInput.length === 4) {
+    setTimeout(checkPin, 120);
+  }
+}
+function pinBack() {
+  pinInput = pinInput.slice(0, -1);
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+}
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('pd' + i).classList.toggle('filled', i < pinInput.length);
+  }
+}
+function checkPin() {
+  if (pinInput === CORRECT_PIN) {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('main-shell').classList.add('visible');
+    initDashboard();
+  } else {
+    document.getElementById('pin-error').textContent = 'Incorrect PIN';
+    pinInput = '';
+    updatePinDots();
+    setTimeout(() => document.getElementById('pin-error').textContent = '', 2000);
+  }
+}
+
+// ===================== STATE =====================
+const CONSTRUCTOR_COLORS = {
+  'Ferrari': '#DC0000',
+  'McLaren': '#FF8000',
+  'Red Bull': '#1E5BC6',
+  'Mercedes': '#00D2BE',
+  'Aston Martin': '#229971',
+  'Alpine': '#0078FF',
+  'Williams': '#1868DB',
+  'Racing Bulls': '#2647D8',
+  'Haas': '#B0B3B8',
+  'Cadillac': '#1A1A1A',
+};
+
+const DAY_LABELS = ['Practice & Qualifying', 'Race Day 1', 'Race Day 2', 'Race Day 3', 'Austrian GP Final'];
+
+let appState = {
+  day: 1,
+  dayOpen: true,
+  standingsTab: 'constructors',
+  logFilter: 'all',
+  prData: [
+    { id: 'pr1', driver: 'Alex Martinez', team: 'Pacific Crown', category: 'iPhone AppleCare', bracket: 'PZ', newRecord: 7, prevRecord: 4, timestamp: new Date(Date.now() - 12*60000).toISOString(), acknowledged: false },
+    { id: 'pr2', driver: 'Avery Santos', team: 'Coyote Hills Racing', category: 'Today at Apple Session Led', bracket: 'Forum', newRecord: 3, prevRecord: 1, timestamp: new Date(Date.now() - 35*60000).toISOString(), acknowledged: false },
+    { id: 'pr3', driver: 'Jordan Kim', team: 'Corazón GP', category: 'AppleCare Conversion', bracket: 'GB', newRecord: 5, prevRecord: 3, timestamp: new Date(Date.now() - 68*60000).toISOString(), acknowledged: true },
+  ],
+  constructors: [
+    { name: 'Pacific Crown', pts: 142 }, { name: 'Fuego Racing', pts: 128 },
+    { name: 'Coyote Hills Racing', pts: 117 }, { name: 'Catalina Royale', pts: 104 },
+    { name: 'Mojave Motorsport', pts: 98 }, { name: 'Long Beach Velocity', pts: 87 },
+    { name: 'Escudería del Sol', pts: 76 }, { name: 'Santana Speedworks', pts: 64 },
+    { name: 'Corazón GP', pts: 55 }, { name: 'Rey del Norte', pts: 42 },
+  ],
+  constructorMembers: {
+    'Pacific Crown': [
+      { name: 'Alex Martinez', role: 'PZ', pts: 68 }, { name: 'Jamie Chen', role: 'PZ', pts: 34 }, { name: 'Blake Morales', role: 'Forum', pts: 40 }
+    ],
+    'Fuego Racing': [
+      { name: 'Morgan Lee', role: 'PZ', pts: 55 }, { name: 'Dana Flores', role: 'Ops', pts: 73 }
+    ],
+  },
+  drivers: {
+    PZ: [
+      { name: 'Alex Martinez', team: 'Pacific Crown', pts: 68 }, { name: 'Morgan Lee', team: 'Fuego Racing', pts: 55 },
+      { name: 'Nofo Keil', team: 'Mojave Motorsport', pts: 48 }, { name: 'Riley Garcia', team: 'Mojave Motorsport', pts: 42 },
+      { name: 'Sam Torres', team: 'Escudería del Sol', pts: 38 }, { name: 'Jamie Chen', team: 'Pacific Crown', pts: 34 },
+      { name: 'Krystell Barreto', team: 'Catalina Royale', pts: 29 }, { name: 'Taylor Reyes', team: 'Catalina Royale', pts: 25 },
+      { name: 'Dana Flores', team: 'Fuego Racing', pts: 18 }, { name: 'Casey Nguyen', team: 'Rey del Norte', pts: 12 },
+    ],
+    GB: [
+      { name: 'Jordan Kim', team: 'Corazón GP', pts: 72 }, { name: 'Quinn Ramirez', team: 'Santana Speedworks', pts: 61 },
+      { name: 'Drew Patel', team: 'Long Beach Velocity', pts: 53 },
+    ],
+    Forum: [
+      { name: 'Avery Santos', team: 'Coyote Hills Racing', pts: 85 }, { name: 'Blake Morales', team: 'Pacific Crown', pts: 62 },
+    ],
+    Ops: [
+      { name: 'Cameron Lopez', team: 'Escudería del Sol', pts: 44 },
+    ]
+  },
+  driverDetails: {
+    'Alex Martinez': { bracket: 'PZ', team: 'Pacific Crown', seasonPts: 68, categories: [
+      { name: 'iPhone AppleCare', qty: 7, pts: 21 }, { name: 'Biz Intro', qty: 3, pts: 6 },
+      { name: 'Service Sign-up Customer', qty: 5, pts: 10 }, { name: 'iPad/Watch/Mac AppleCare', qty: 4, pts: 4 },
+    ]},
+    'Jordan Kim': { bracket: 'GB', team: 'Corazón GP', seasonPts: 72, categories: [
+      { name: 'AppleCare Conversion', qty: 5, pts: 15 }, { name: 'Completed iPhone or Mac Repair', qty: 8, pts: 24 },
+      { name: 'Conversion', qty: 6, pts: 12 }, { name: 'Biz Intro', qty: 3, pts: 6 },
+    ]},
+  },
+  flags: [
+    { id: 'f1', driver: 'Jamie Chen', team: 'Pacific Crown', bracket: 'PZ', category: 'iPhone AppleCare', qty: 12, type: 'Point Spike', detail: 'Entry (12) exceeds prior daily total (8)', timestamp: new Date(Date.now() - 5*60000).toISOString(), status: 'pending' },
+    { id: 'f2', driver: 'Quinn Ramirez', team: 'Santana Speedworks', bracket: 'GB', category: 'GB Appt', qty: 3, type: 'Duplicate', detail: 'Same category within 60 seconds', timestamp: new Date(Date.now() - 22*60000).toISOString(), status: 'pending' },
+  ],
+  entries: [
+    { id: 'e1', driver: 'Alex Martinez', team: 'Pacific Crown', bracket: 'PZ', category: 'iPhone AppleCare', qty: 7, pts: 21, timestamp: new Date(Date.now() - 12*60000).toISOString(), flagged: false, voided: false },
+    { id: 'e2', driver: 'Jordan Kim', team: 'Corazón GP', bracket: 'GB', category: 'AppleCare Conversion', qty: 5, pts: 15, timestamp: new Date(Date.now() - 18*60000).toISOString(), flagged: false, voided: false },
+    { id: 'e3', driver: 'Jamie Chen', team: 'Pacific Crown', bracket: 'PZ', category: 'iPhone AppleCare', qty: 12, pts: 36, timestamp: new Date(Date.now() - 5*60000).toISOString(), flagged: true, voided: false },
+    { id: 'e4', driver: 'Avery Santos', team: 'Coyote Hills Racing', bracket: 'Forum', category: 'Today at Apple Session Led', qty: 3, pts: 15, timestamp: new Date(Date.now() - 35*60000).toISOString(), flagged: false, voided: false },
+    { id: 'e5', driver: 'Cameron Lopez', team: 'Escudería del Sol', bracket: 'Ops', category: 'APU/IDL Fulfilled', qty: 8, pts: 4, timestamp: new Date(Date.now() - 45*60000).toISOString(), flagged: false, voided: false },
+    { id: 'e6', driver: 'Quinn Ramirez', team: 'Santana Speedworks', bracket: 'GB', category: 'GB Appt', qty: 3, pts: 3, timestamp: new Date(Date.now() - 22*60000).toISOString(), flagged: true, voided: false },
+  ],
+  confirmAction: null,
+};
+
+// ===================== INIT =====================
+function initDashboard() {
+  updateTopBadge();
+  renderPRList();
+  renderStandings('constructors');
+  renderDayControl();
+  renderFlags();
+  renderLog('all');
+}
+
+// ===================== NAVIGATION =====================
+function openSection(section) {
+  document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + section).classList.add('active');
+  document.getElementById('main-content').scrollTop = 0;
+  const titles = { home:'Manager Dashboard', pr:'PR Alerts', standings:'Standings', day:'Day Control', flags:'Flag Queue', log:'Entry Log' };
+  document.getElementById('top-title').textContent = '🇦🇹 Austrian Grand Prix';
+  document.getElementById('top-sub').textContent = titles[section] || 'Manager Dashboard';
+}
+
+function goHome() {
+  openSection('home');
+  updateBadges();
+}
+
+function updateBadges() {
+  const prCount = appState.prData.filter(p => !p.acknowledged).length;
+  document.getElementById('pr-count-badge').textContent = prCount;
+  const flagCount = appState.flags.filter(f => f.status === 'pending').length;
+  document.getElementById('flag-count-badge').textContent = flagCount;
+  document.getElementById('day-ctrl-desc').textContent = `Day ${appState.day} · ${appState.dayOpen ? 'Open' : 'Closed'}`;
+}
+
+function updateTopBadge() {
+  document.getElementById('top-day-badge').textContent = `Day ${appState.day}`;
+  updateBadges();
+}
+
+// ===================== PR ALERTS =====================
+function renderPRList() {
+  const list = document.getElementById('pr-list');
+  if (appState.prData.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🏅</div><div class="empty-text">No PRs yet — they\'ll show up here when team members break their records.</div></div>';
+    return;
+  }
+  list.innerHTML = appState.prData.map(pr => {
+    const timeAgo = getTimeAgo(pr.timestamp);
+    return `
+      <div class="pr-item ${pr.acknowledged ? 'acknowledged' : ''}" id="pr-item-${pr.id}">
+        <div class="pr-badge-sm">🏅 Personal Record</div>
+        <div class="pr-driver">${pr.driver}</div>
+        <div class="pr-cat">${pr.category} · ${pr.team}</div>
+        <div class="pr-numbers">
+          <div class="pr-num-block">
+            <div class="pr-num-val" style="color:var(--red)">${pr.newRecord}</div>
+            <div class="pr-num-label">New Record</div>
+          </div>
+          <div style="display:flex;align-items:center;color:var(--muted);font-size:20px;margin-top:4px;">→</div>
+          <div class="pr-num-block">
+            <div class="pr-num-val">${pr.prevRecord || '—'}</div>
+            <div class="pr-num-label">Previous Best</div>
+          </div>
+        </div>
+        <div class="pr-meta">${timeAgo} · ${pr.bracket}</div>
+        <button class="pr-ack-btn ${pr.acknowledged ? 'done' : ''}" onclick="ackPR('${pr.id}')">
+          ${pr.acknowledged ? '✓ Called Out' : 'Called Out ✓'}
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function ackPR(id) {
+  const pr = appState.prData.find(p => p.id === id);
+  if (pr) { pr.acknowledged = true; }
+  renderPRList();
+  updateBadges();
+}
+
+// ===================== STANDINGS =====================
+let currentStandingsTab = 'constructors';
+
+function switchStandingsTab(tab, btn) {
+  currentStandingsTab = tab;
+  document.querySelectorAll('.bracket-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStandings(tab);
+}
+
+function renderStandings(tab) {
+  const list = document.getElementById('standings-list');
+  if (tab === 'constructors') {
+    list.innerHTML = appState.constructors.map((c, i) => {
+      const color = CONSTRUCTOR_COLORS[c.name] || '#888';
+      return `
+        <div class="standings-row ${i === 0 ? 'p1' : ''}" onclick="openConstructorDrill('${c.name}')">
+          <div class="standings-pos">${i + 1}</div>
+          <div class="name-info">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="tdot" style="background:${color}"></div>
+              <div class="standings-name">${c.name}</div>
+            </div>
+          </div>
+          <div class="standings-pts">${c.pts}</div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    const drivers = appState.drivers[tab] || [];
+    list.innerHTML = drivers.map((d, i) => {
+      const color = CONSTRUCTOR_COLORS[d.team] || '#888';
+      return `
+        <div class="standings-row ${i === 0 ? 'p1' : ''}" onclick="openDriverDrill('${d.name}')">
+          <div class="standings-pos">${i + 1}</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="tdot" style="background:${color}"></div>
+              <div class="standings-name">${d.name}</div>
+            </div>
+            <div class="standings-team">${d.team}</div>
+          </div>
+          <div class="standings-pts">${d.pts}</div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function openConstructorDrill(name) {
+  const color = CONSTRUCTOR_COLORS[name] || '#888';
+  const members = appState.constructorMembers[name] || [{ name: 'No data yet', role: '—', pts: 0 }];
+  const total = appState.constructors.find(c => c.name === name)?.pts || 0;
+
+  document.getElementById('drill-inner').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <div style="width:12px;height:12px;border-radius:50%;background:${color}"></div>
+      <div class="drill-title">${name}</div>
+    </div>
+    <div class="drill-sub">${total} season pts · Tap a driver for breakdown</div>
+    ${members.sort((a,b) => b.pts - a.pts).map(m => `
+      <div class="drill-member-row" onclick="openDriverDrill('${m.name}')">
+        <div style="flex:1;">
+          <div style="font-family:'Bitter',serif;font-size:15px;color:var(--silver-light);">${m.name}</div>
+          <div style="font-size:12px;color:var(--muted);">${m.role}</div>
+        </div>
+        <div style="font-family:'Bitter',serif;font-size:18px;font-weight:900;color:var(--silver-light);">${m.pts}</div>
+        <div style="color:var(--muted);font-size:16px;margin-left:8px;">›</div>
+      </div>
+    `).join('')}
+    <div class="sep"></div>
+    <div class="drill-total-label">Season Total</div>
+    <div class="drill-total">${total} pts</div>
+  `;
+  document.getElementById('drill-sheet').classList.add('visible');
+}
+
+function openDriverDrill(name) {
+  const details = appState.driverDetails[name];
+  if (!details) {
+    document.getElementById('drill-inner').innerHTML = `
+      <div class="drill-title">${name}</div>
+      <div class="drill-sub">No detailed data loaded yet</div>
+      <div style="color:var(--muted);font-size:14px;margin-top:12px;">In production, this pulls category-by-category breakdown from the sheet.</div>
+    `;
+    document.getElementById('drill-sheet').classList.add('visible');
+    return;
+  }
+  const total = details.categories.reduce((sum, c) => sum + c.pts, 0);
+  document.getElementById('drill-inner').innerHTML = `
+    <div class="drill-title">${name}</div>
+    <div class="drill-sub">${details.team} · ${details.bracket} · Season: ${details.seasonPts} pts</div>
+    <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;margin-top:4px;">Today's Breakdown</div>
+    ${details.categories.map(c => `
+      <div class="drill-stat-row">
+        <div class="drill-stat-name">${c.name}</div>
+        <div class="drill-stat-qty">${c.qty}×</div>
+        <div class="drill-stat-pts">${c.pts} pts</div>
+      </div>
+    `).join('')}
+    <div class="sep"></div>
+    <div class="drill-total-label">Today's Total</div>
+    <div class="drill-total">${total} pts</div>
+  `;
+  document.getElementById('drill-sheet').classList.add('visible');
+}
+
+function closeDrill(e) {
+  if (e.target === document.getElementById('drill-sheet')) {
+    document.getElementById('drill-sheet').classList.remove('visible');
+  }
+}
+
+// ===================== DAY CONTROL =====================
+function renderDayControl() {
+  const labels = DAY_LABELS;
+  document.getElementById('day-status-val').textContent = `Day ${appState.day} — ${labels[appState.day - 1] || ''}`;
+  document.getElementById('day-status-sub').textContent = `Status: ${appState.dayOpen ? 'Open · Kiosk accepting entries' : 'Closed · Kiosk locked'}`;
+  const btn = document.getElementById('day-toggle-btn');
+  if (appState.dayOpen) {
+    btn.textContent = `Close Day ${appState.day}`;
+    btn.className = 'day-open-btn close';
+  } else {
+    btn.textContent = `Open Day ${appState.day}`;
+    btn.className = 'day-open-btn open';
+  }
+  document.getElementById('prev-day-btn').disabled = appState.day <= 1;
+  document.getElementById('next-day-btn').disabled = appState.day >= 5;
+}
+
+function navDay(delta) {
+  appState.day = Math.max(1, Math.min(5, appState.day + delta));
+  renderDayControl();
+  updateTopBadge();
+}
+
+function confirmDayToggle() {
+  const action = appState.dayOpen ? 'close' : 'open';
+  const labels = DAY_LABELS;
+  document.getElementById('confirm-title-sm').textContent = `${action === 'close' ? 'Close' : 'Open'} Day ${appState.day}?`;
+  document.getElementById('confirm-body').textContent = action === 'close'
+    ? `This will lock the kiosk. Team members won't be able to log entries until the day is reopened.`
+    : `This will open the kiosk for Day ${appState.day} — ${labels[appState.day - 1]}. Team members can start logging entries.`;
+  document.getElementById('confirm-go-btn').textContent = `Yes, ${action === 'close' ? 'Close' : 'Open'} Day`;
+  appState.confirmAction = () => {
+    appState.dayOpen = !appState.dayOpen;
+    renderDayControl();
+    updateBadges();
+    closeConfirm();
+  };
+  document.getElementById('confirm-sheet').classList.add('visible');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-sheet').classList.remove('visible');
+  appState.confirmAction = null;
+}
+
+document.getElementById('confirm-go-btn').addEventListener('click', () => {
+  if (appState.confirmAction) appState.confirmAction();
+});
+
+// ===================== FLAG QUEUE =====================
+function renderFlags() {
+  const list = document.getElementById('flag-list');
+  const pending = appState.flags.filter(f => f.status !== 'approved');
+  if (pending.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">Queue clear — no flags to review.</div></div>';
+    return;
+  }
+  list.innerHTML = appState.flags.map(f => {
+    const timeAgo = getTimeAgo(f.timestamp);
+    return `
+      <div class="flag-item ${f.status === 'voided' ? 'voided' : ''}" id="flag-${f.id}">
+        <div class="flag-type-badge">⚠️ ${f.type}</div>
+        <div class="flag-driver">${f.driver}</div>
+        <div class="flag-detail">${f.qty}× ${f.category} · ${f.bracket} · ${timeAgo}</div>
+        <div class="flag-detail" style="margin-top:3px;">${f.detail}</div>
+        ${f.status === 'voided' ? '<div style="margin-top:8px;font-size:12px;color:var(--muted);">Voided — removed from totals</div>' : `
+          <div class="flag-actions">
+            <button class="flag-btn approve" onclick="handleFlag('${f.id}','approve')">✓ Approve</button>
+            <button class="flag-btn void" onclick="handleFlag('${f.id}','void')">✕ Void</button>
+          </div>
+        `}
+      </div>
+    `;
+  }).join('');
+}
+
+function handleFlag(id, action) {
+  const flag = appState.flags.find(f => f.id === id);
+  if (!flag) return;
+  flag.status = action;
+  const entry = appState.entries.find(e => e.flagged && e.driver === flag.driver);
+  if (entry && action === 'void') entry.voided = true;
+  renderFlags();
+  updateBadges();
+}
+
+// ===================== ENTRY LOG =====================
+function filterLog(filter, btn) {
+  appState.logFilter = filter;
+  document.querySelectorAll('.log-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLog(filter);
+}
+
+function renderLog(filter) {
+  const list = document.getElementById('log-list');
+  let entries = [...appState.entries].reverse();
+  if (filter !== 'all') {
+    if (filter === 'flagged') entries = entries.filter(e => e.flagged);
+    else entries = entries.filter(e => e.bracket === filter);
+  }
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No entries matching this filter.</div></div>';
+    return;
+  }
+  list.innerHTML = entries.map(e => {
+    const color = CONSTRUCTOR_COLORS[e.team] || '#888';
+    const timeAgo = getTimeAgo(e.timestamp);
+    return `
+      <div class="log-item ${e.flagged ? 'flagged' : ''} ${e.voided ? 'voided' : ''}">
+        <div class="tdot" style="background:${color};margin-top:4px;"></div>
+        <div class="log-info">
+          <div class="log-driver">${e.driver}</div>
+          <div class="log-detail">${e.qty}× ${e.category} · ${e.bracket} · ${timeAgo}</div>
+          <div class="log-detail">${e.team}</div>
+          ${e.flagged ? '<span class="log-flag">⚠️ Flagged</span>' : ''}
+          ${e.voided ? '<span class="log-voided">✕ Voided</span>' : ''}
+        </div>
+        <div class="log-pts">${e.voided ? '—' : e.pts + ' pts'}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===================== UTILS =====================
+function getTimeAgo(iso) {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  return `${Math.floor(diff/3600)}h ago`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Austrian Grand Prix — Championship Scoreboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700;900&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a1f16;
+    --bg2: #0f2a1e;
+    --bg3: #142f22;
+    --silver: #c9d2d6;
+    --silver-light: #eef2f0;
+    --red: #d7263d;
+    --gold: #c8a84b;
+    --white: #ffffff;
+    --muted: rgba(201,210,214,0.45);
+    --border: rgba(201,210,214,0.12);
+    --card: rgba(255,255,255,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100vw; height: 100vh; overflow: hidden; background: var(--bg); font-family: 'Barlow Condensed', sans-serif; color: var(--silver); }
+
+  /* MOUNTAIN BG */
+  .mountain-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .mountain-bg svg { position: absolute; bottom: 0; width: 100%; height: 45%; }
+
+  /* CHECKER */
+  .checker { position: fixed; top: 0; left: 0; right: 0; height: 8px; z-index: 100;
+    background: repeating-linear-gradient(90deg, #fff 0px, #fff 16px, #000 16px, #000 32px); opacity: 0.8; }
+  .checker-bottom { position: fixed; bottom: 0; left: 0; right: 0; height: 8px; z-index: 100;
+    background: repeating-linear-gradient(90deg, #fff 0px, #fff 16px, #000 16px, #000 32px); opacity: 0.8; }
+
+  /* LAYOUT */
+  .board { position: relative; z-index: 10; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 60px 24px 24px; height: 100vh; }
+  .col { display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+
+  /* HEADER */
+  .board-header {
+    position: fixed; top: 8px; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 48px;
+    background: rgba(10,31,22,0.95); border-bottom: 1px solid var(--border);
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-event { font-family: 'Bitter', serif; font-size: 18px; font-weight: 900; color: var(--silver-light); }
+  .header-circuit { font-size: 13px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .day-badge { background: var(--red); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; }
+  .last-update { font-size: 11px; color: var(--muted); }
+
+  /* SECTION HEADER */
+  .section-head {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .section-label { font-family: 'Bitter', serif; font-size: 14px; font-weight: 700; color: var(--silver-light); letter-spacing: 0.04em; text-transform: uppercase; }
+  .section-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-left: auto; }
+
+  /* CONSTRUCTOR TABLE */
+  .constructor-list { display: flex; flex-direction: column; gap: 5px; }
+  .constructor-row {
+    display: grid; grid-template-columns: 28px 1fr 80px 60px; gap: 8px; align-items: center;
+    padding: 8px 10px; border-radius: 8px; background: var(--card); border: 1px solid var(--border);
+    transition: all 0.3s;
+  }
+  .constructor-row.p1 { border-color: var(--gold); background: rgba(200,168,75,0.08); }
+  .constructor-row.p2 { border-color: var(--silver); background: rgba(201,210,214,0.05); }
+  .constructor-row.p3 { border-color: #cd7f32; background: rgba(205,127,50,0.05); }
+  .constructor-row.highlight { animation: flashRow 0.6s ease; }
+  @keyframes flashRow { 0%,100% { background: var(--card); } 50% { background: rgba(215,38,61,0.15); } }
+
+  .pos-num { font-family: 'Bitter', serif; font-size: 16px; font-weight: 900; color: var(--muted); text-align: center; }
+  .constructor-row.p1 .pos-num { color: var(--gold); }
+  .constructor-row.p2 .pos-num { color: var(--silver); }
+  .constructor-row.p3 .pos-num { color: #cd7f32; }
+
+  .constructor-info { min-width: 0; }
+  .constructor-name { font-family: 'Bitter', serif; font-size: 13px; font-weight: 700; color: var(--silver-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .constructor-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 4px; }
+  .constructor-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+  .constructor-pts { font-family: 'Bitter', serif; font-size: 18px; font-weight: 900; color: var(--silver-light); text-align: right; }
+  .constructor-delta { font-size: 11px; color: var(--muted); text-align: right; }
+  .constructor-delta.up { color: #4ce88a; }
+
+  /* SPOTLIGHT BOX */
+  .spotlight-box {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; transition: all 0.4s; position: relative; overflow: hidden;
+  }
+  .spotlight-box.flash { border-color: var(--gold); background: rgba(200,168,75,0.08); }
+  .spotlight-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .spotlight-driver { font-family: 'Bitter', serif; font-size: 22px; font-weight: 900; color: var(--silver-light); }
+  .spotlight-meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .spotlight-cat { font-size: 16px; color: var(--silver); margin-top: 6px; font-weight: 600; }
+  .spotlight-time { position: absolute; top: 14px; right: 16px; font-size: 11px; color: var(--muted); }
+  .spotlight-pr { background: var(--red); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+  .spotlight-empty { color: var(--muted); font-size: 14px; font-style: italic; }
+
+  /* DRIVER STANDINGS */
+  .bracket-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .bracket-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .bracket-tab {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border);
+    color: var(--muted); cursor: default; transition: all 0.3s;
+  }
+  .bracket-tab.active { background: var(--red); border-color: var(--red); color: #fff; }
+  .pip-row { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+  .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+  .pip.active { background: var(--gold); }
+
+  .driver-table { flex: 1; overflow-y: auto; }
+  .driver-row {
+    display: grid; grid-template-columns: 28px 1fr 55px; gap: 8px; align-items: center;
+    padding: 7px 10px; border-radius: 7px; margin-bottom: 4px;
+    background: var(--card); border: 1px solid var(--border);
+  }
+  .driver-row.p1 { border-color: var(--gold); }
+  .driver-pos { font-family: 'Bitter', serif; font-size: 15px; font-weight: 900; color: var(--muted); text-align: center; }
+  .driver-row.p1 .driver-pos { color: var(--gold); }
+  .driver-name-wrap { min-width: 0; }
+  .driver-name { font-family: 'Bitter', serif; font-size: 14px; color: var(--silver-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .driver-team-sm { font-size: 11px; color: var(--muted); }
+  .driver-pts-sm { font-family: 'Bitter', serif; font-size: 16px; font-weight: 900; color: var(--silver-light); text-align: right; }
+
+  .bracket-header { font-family: 'Bitter', serif; font-size: 13px; font-weight: 700; color: var(--silver); text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 0 6px; border-top: 1px solid var(--border); margin-top: 8px; }
+  .bracket-header:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+
+  /* TICKER */
+  .ticker {
+    position: fixed; bottom: 8px; left: 0; right: 0; z-index: 50;
+    height: 28px; overflow: hidden; background: rgba(10,31,22,0.9);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center;
+  }
+  .ticker-label { background: var(--red); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; padding: 0 12px; height: 100%; display: flex; align-items: center; flex-shrink: 0; text-transform: uppercase; }
+  .ticker-track { overflow: hidden; flex: 1; }
+  .ticker-inner { white-space: nowrap; font-size: 12px; color: var(--muted); letter-spacing: 0.06em; animation: tickerScroll 40s linear infinite; }
+  @keyframes tickerScroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+  /* FASTEST LAP OVERLAY */
+  #fastest-overlay {
+    position: fixed; inset: 0; z-index: 200; display: none;
+    background: rgba(10,31,22,0.85);
+    align-items: center; justify-content: center; flex-direction: column;
+  }
+  #fastest-overlay.visible { display: flex; }
+  .fastest-badge { background: var(--red); color: #fff; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 20px; border-radius: 20px; margin-bottom: 12px; }
+  .fastest-name { font-family: 'Bitter', serif; font-size: 48px; font-weight: 900; color: var(--silver-light); }
+  .fastest-detail { font-size: 18px; color: var(--muted); margin-top: 8px; }
+
+  .team-bar-color { width: 10px; border-radius: 2px; height: 16px; flex-shrink: 0; }
+
+  /* OVERTAKE FLASH */
+  .overtake-flash {
+    position: fixed; top: 60px; right: 20px; z-index: 150;
+    background: var(--red); color: #fff; padding: 8px 16px; border-radius: 8px;
+    font-family: 'Bitter', serif; font-size: 14px; font-weight: 700;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .overtake-flash.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="mountain-bg">
+  <svg viewBox="0 0 1400 300" preserveAspectRatio="xMidYMax meet">
+    <polygon points="0,300 180,100 360,300" fill="rgba(20,60,35,0.55)"/>
+    <polygon points="150,300 350,60 550,300" fill="rgba(15,50,28,0.65)"/>
+    <polygon points="400,300 600,40 800,300" fill="rgba(20,60,35,0.6)"/>
+    <polygon points="600,300 800,90 1000,300" fill="rgba(15,45,25,0.65)"/>
+    <polygon points="850,300 1050,50 1250,300" fill="rgba(20,60,35,0.55)"/>
+    <polygon points="1100,300 1280,80 1400,300" fill="rgba(15,50,28,0.6)"/>
+    <polygon points="0,300 250,180 500,300" fill="rgba(10,35,20,0.75)"/>
+    <polygon points="400,300 650,160 900,300" fill="rgba(10,35,20,0.75)"/>
+    <polygon points="750,300 1000,150 1250,300" fill="rgba(10,35,20,0.75)"/>
+    <polygon points="1100,300 1300,175 1400,300" fill="rgba(10,35,20,0.7)"/>
+  </svg>
+</div>
+
+<div class="checker"></div>
+<div class="checker-bottom"></div>
+
+<div class="board-header">
+  <div class="header-left">
+    <div class="live-dot"></div>
+    <div>
+      <div class="header-event">🇦🇹 Austrian Grand Prix</div>
+    </div>
+    <div class="header-circuit">Red Bull Ring · Spielberg</div>
+  </div>
+  <div class="header-right">
+    <span class="day-badge" id="day-badge">Day 1</span>
+    <span class="last-update" id="last-update">Updating...</span>
+  </div>
+</div>
+
+<div class="board">
+  <!-- LEFT COLUMN: Constructor standings + spotlight -->
+  <div class="col">
+    <div>
+      <div class="section-head">
+        <span class="section-label">🏆 Constructor's Championship</span>
+        <span class="section-sub">All 5 days</span>
+      </div>
+    </div>
+    <div class="constructor-list" id="constructor-list">
+      <!-- Populated by JS -->
+    </div>
+    <div>
+      <div class="section-head" style="margin-top:4px;">
+        <span class="section-label">⚡ Latest Submission</span>
+      </div>
+    </div>
+    <div class="spotlight-box" id="spotlight-box">
+      <div class="spotlight-time" id="spotlight-time"></div>
+      <div class="spotlight-label">Most Recent Entry</div>
+      <div class="spotlight-empty" id="spotlight-empty">Waiting for first entry...</div>
+      <div id="spotlight-content" style="display:none;">
+        <div class="spotlight-driver" id="spotlight-driver"></div>
+        <div class="spotlight-meta" id="spotlight-meta"></div>
+        <div class="spotlight-cat" id="spotlight-cat"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: Driver standings -->
+  <div class="col">
+    <div>
+      <div class="section-head">
+        <span class="section-label">🏎️ Driver's Championship</span>
+        <div class="pip-row">
+          <div class="pip active" id="pip-0"></div>
+          <div class="pip" id="pip-1"></div>
+          <div class="pip" id="pip-2"></div>
+        </div>
+      </div>
+    </div>
+    <div class="bracket-tabs">
+      <div class="bracket-tab active" id="tab-0">Product Zone</div>
+      <div class="bracket-tab" id="tab-1">Genius Bar</div>
+      <div class="bracket-tab" id="tab-2">Forum + Ops</div>
+    </div>
+    <div class="driver-table" id="driver-table">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<div class="ticker">
+  <div class="ticker-label">Live</div>
+  <div class="ticker-track">
+    <div class="ticker-inner" id="ticker-inner">Austrian Grand Prix · Red Bull Ring · Spielberg · Championship in progress · Scores updating every 10 seconds · May the fastest team win 🇦🇹</div>
+  </div>
+</div>
+
+<div id="fastest-overlay">
+  <div class="fastest-badge">⚡ Fastest Lap of the Hour</div>
+  <div class="fastest-name" id="fastest-name">—</div>
+  <div class="fastest-detail" id="fastest-detail"></div>
+</div>
+
+<div class="overtake-flash" id="overtake-flash"></div>
+
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxoFKqfKifXlryGg99H4hwRDPaw0yBMWjGNuNjX3tYcvoxrkz6Y6N7QNud1A4OJmAqY/exec';
+const REFRESH_MS = 10000;
+const BRACKET_ROTATE_MS = 8000;
+
+const CONSTRUCTOR_COLORS = {
+  'Ferrari': '#DC0000',
+  'McLaren': '#FF8000',
+  'Red Bull': '#1E5BC6',
+  'Mercedes': '#00D2BE',
+  'Aston Martin': '#229971',
+  'Alpine': '#0078FF',
+  'Williams': '#1868DB',
+  'Racing Bulls': '#2647D8',
+  'Haas': '#B0B3B8',
+  'Cadillac': '#1A1A1A',
+};
+
+// Live data — populated from sheet on fetch
+let data = {
+  constructors: [
+    { name: 'Ferrari', pts: 0, delta: null },
+    { name: 'McLaren', pts: 0, delta: null },
+    { name: 'Red Bull', pts: 0, delta: null },
+    { name: 'Mercedes', pts: 0, delta: null },
+    { name: 'Aston Martin', pts: 0, delta: null },
+    { name: 'Alpine', pts: 0, delta: null },
+    { name: 'Williams', pts: 0, delta: null },
+    { name: 'Racing Bulls', pts: 0, delta: null },
+    { name: 'Haas', pts: 0, delta: null },
+    { name: 'Cadillac', pts: 0, delta: null },
+  ],
+  drivers: { PZ: [], GB: [], Forum: [], Ops: [] },
+  day: 1,
+  spotlight: null
+};
+
+let prevConstructorOrder = [];
+let bracketView = 0; // 0=PZ, 1=GB, 2=Forum+Ops
+let bracketTimer = null;
+
+// ===================== CONSTRUCTORS =====================
+function renderConstructors() {
+  const list = document.getElementById('constructor-list');
+  const maxPts = data.constructors[0]?.pts || 1;
+  const currentOrder = data.constructors.map(c => c.name);
+
+  list.innerHTML = data.constructors.map((c, i) => {
+    const pos = i + 1;
+    const posClass = pos === 1 ? 'p1' : pos === 2 ? 'p2' : pos === 3 ? 'p3' : '';
+    const color = CONSTRUCTOR_COLORS[c.name] || '#888';
+    const barW = Math.round((c.pts / maxPts) * 100);
+    const prevPos = prevConstructorOrder.indexOf(c.name);
+    const highlight = prevPos > -1 && prevPos > i ? 'highlight' : '';
+
+    return `
+      <div class="constructor-row ${posClass} ${highlight}" id="cr-${i}">
+        <div class="pos-num">${pos}</div>
+        <div class="constructor-info">
+          <div class="constructor-name">${c.name}</div>
+          <div class="constructor-bar-wrap">
+            <div class="constructor-bar-fill" style="width:${barW}%;background:${color}"></div>
+          </div>
+        </div>
+        <div>
+          <div class="constructor-pts">${c.pts}</div>
+        </div>
+        <div>
+          <div class="constructor-delta ${c.delta ? 'up' : ''}">${c.delta || ''}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  prevConstructorOrder = currentOrder;
+}
+
+// ===================== DRIVERS =====================
+function renderDrivers() {
+  const table = document.getElementById('driver-table');
+
+  // Update tab labels & pips
+  ['Product Zone', 'Genius Bar', 'Forum + Ops'].forEach((label, i) => {
+    const tab = document.getElementById('tab-' + i);
+    if (tab) {
+      tab.textContent = label;
+      tab.classList.toggle('active', i === bracketView);
+    }
+    const pip = document.getElementById('pip-' + i);
+    if (pip) pip.classList.toggle('active', i === bracketView);
+  });
+
+  if (bracketView === 0) {
+    renderBracketTable(table, [{ label: 'Product Zone', key: 'PZ' }]);
+  } else if (bracketView === 1) {
+    renderBracketTable(table, [{ label: 'Genius Bar', key: 'GB' }]);
+  } else {
+    renderBracketTable(table, [
+      { label: 'Forum', key: 'Forum' },
+      { label: 'Operations', key: 'Ops' }
+    ]);
+  }
+}
+
+function renderBracketTable(container, brackets) {
+  container.innerHTML = brackets.map(b => {
+    const drivers = (data.drivers[b.key] || []).slice(0, 10);
+    const rows = drivers.map((d, i) => {
+      const pos = i + 1;
+      const color = CONSTRUCTOR_COLORS[d.team] || '#888';
+      return `
+        <div class="driver-row ${pos === 1 ? 'p1' : ''}">
+          <div class="driver-pos">${pos}</div>
+          <div class="driver-name-wrap">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+              <div class="driver-name">${d.name}</div>
+            </div>
+            <div class="driver-team-sm">${d.team}</div>
+          </div>
+          <div class="driver-pts-sm">${d.pts}</div>
+        </div>
+      `;
+    }).join('');
+    return `<div class="bracket-header">${b.label}</div>${rows}`;
+  }).join('');
+}
+
+function rotateBracket() {
+  bracketView = (bracketView + 1) % 3;
+  renderDrivers();
+}
+
+// ===================== SPOTLIGHT =====================
+let spotlightEntry = null;
+let spotlightInterval = null;
+
+function updateSpotlight(entry) {
+  if (!entry) return;
+  spotlightEntry = entry;
+  const box = document.getElementById('spotlight-box');
+  const empty = document.getElementById('spotlight-empty');
+  const content = document.getElementById('spotlight-content');
+  const driver = document.getElementById('spotlight-driver');
+  const meta = document.getElementById('spotlight-meta');
+  const cat = document.getElementById('spotlight-cat');
+
+  empty.style.display = 'none';
+  content.style.display = 'block';
+  driver.innerHTML = entry.driverName + (entry.isPR ? '<span class="spotlight-pr">PR</span>' : '');
+  meta.textContent = `${entry.constructor} · ${entry.loggedBracket}`;
+  cat.textContent = `${entry.qty}× ${entry.categoryName}`;
+
+  box.classList.add('flash');
+  setTimeout(() => box.classList.remove('flash'), 800);
+
+  updateSpotlightTime();
+  clearInterval(spotlightInterval);
+  spotlightInterval = setInterval(updateSpotlightTime, 30000);
+}
+
+function updateSpotlightTime() {
+  if (!spotlightEntry) return;
+  const el = document.getElementById('spotlight-time');
+  const diff = Math.floor((Date.now() - new Date(spotlightEntry.timestamp).getTime()) / 1000);
+  if (diff < 60) el.textContent = diff < 5 ? 'just now' : `${diff}s ago`;
+  else el.textContent = `${Math.floor(diff/60)}m ago`;
+}
+
+// ===================== OVERTAKE NOTICE =====================
+function showOvertake(msg) {
+  const el = document.getElementById('overtake-flash');
+  el.textContent = '⬆️ ' + msg;
+  el.classList.add('visible');
+  setTimeout(() => el.classList.remove('visible'), 4000);
+}
+
+// ===================== DAY BADGE =====================
+function updateDayBadge() {
+  const labels = ['Practice & Qualifying', 'Race Day 1', 'Race Day 2', 'Race Day 3', 'Monaco Final'];
+  document.getElementById('day-badge').textContent = `Day ${data.day} — ${labels[data.day - 1] || ''}`;
+}
+
+// ===================== TICKER =====================
+function buildTicker() {
+  if (data.constructors.length === 0) return;
+  const parts = data.constructors.slice(0, 5).map((c, i) => `P${i+1}: ${c.name} ${c.pts}pts`);
+  parts.push('🇦🇹 Austrian Grand Prix · Red Bull Ring · Spielberg');
+  document.getElementById('ticker-inner').textContent = parts.join('  ·  ');
+}
+
+// ===================== FETCH & REFRESH =====================
+async function fetchData() {
+  if (!SHEET_URL || SHEET_URL === 'https://script.google.com/macros/s/AKfycbxoFKqfKifXlryGg99H4hwRDPaw0yBMWjGNuNjX3tYcvoxrkz6Y6N7QNud1A4OJmAqY/exec') {
+    renderAll();
+    return;
+  }
+  try {
+    const resp = await fetch(`${SHEET_URL}?action=getScoreboard&t=${Date.now()}`);
+    const fresh = await resp.json();
+    detectOvertakes(data.constructors, fresh.constructors);
+    data = fresh;
+    renderAll();
+  } catch (e) {
+    console.warn('Fetch failed, using cached data');
+    renderAll();
+  }
+}
+
+function detectOvertakes(prev, next) {
+  if (!prev.length || !next.length) return;
+  const prevMap = {};
+  prev.forEach((c, i) => prevMap[c.name] = i);
+  next.forEach((c, i) => {
+    if (prevMap[c.name] !== undefined && prevMap[c.name] > i) {
+      showOvertake(`${c.name} moves to P${i + 1}!`);
+    }
+  });
+}
+
+function renderAll() {
+  renderConstructors();
+  renderDrivers();
+  buildTicker();
+  updateDayBadge();
+  document.getElementById('last-update').textContent = `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+}
+
+// ===================== INIT =====================
+renderAll();
+setInterval(fetchData, REFRESH_MS);
+clearInterval(bracketTimer);
+bracketTimer = setInterval(rotateBracket, BRACKET_ROTATE_MS);
+
+// Demo spotlight after 3s if no live data
+setTimeout(() => {
+  if (!spotlightEntry) {
+    updateSpotlight({
+      driverName: 'Alex Martinez',
+      constructor: 'Pacific Crown',
+      loggedBracket: 'PZ',
+      categoryName: 'iPhone AppleCare',
+      qty: 3,
+      isPR: true,
+      timestamp: new Date().toISOString()
+    });
+  }
+}, 3000);
+</script>
+</body>
+</html>
