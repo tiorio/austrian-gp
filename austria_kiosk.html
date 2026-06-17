@@ -6,991 +6,826 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Austrian Grand Prix — Self-Report Kiosk</title>
+<title>Austrian Grand Prix — Kiosk</title>
 <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700;900&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a1f16;
-    --bg2: #0f2a1e;
-    --bg3: #142f22;
-    --silver: #c9d2d6;
-    --silver-light: #eef2f0;
-    --red: #d7263d;
-    --red-dark: #a51d2f;
-    --gold: #c8a84b;
-    --white: #ffffff;
-    --muted: rgba(201,210,214,0.45);
-    --border: rgba(201,210,214,0.18);
-    --card: rgba(255,255,255,0.04);
-    --card-hover: rgba(255,255,255,0.08);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: 'Barlow Condensed', sans-serif; color: var(--silver); }
+:root {
+  --bg: #0a1f16; --bg2: #0f2a1e; --bg3: #142f22;
+  --silver: #c9d2d6; --silver-light: #eef2f0;
+  --red: #d7263d; --red-dark: #a51d2f;
+  --gold: #c8a84b; --white: #ffffff;
+  --muted: rgba(201,210,214,0.45);
+  --border: rgba(201,210,214,0.18);
+  --card: rgba(255,255,255,0.04);
+  --card-hover: rgba(255,255,255,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: 'Barlow Condensed', sans-serif; color: var(--silver); }
 
-  /* MOUNTAIN BACKGROUND */
-  .mountain-bg {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    overflow: hidden;
-  }
-  .mountain-bg svg { position: absolute; bottom: 0; width: 100%; }
+.checker { position: fixed; top: 0; left: 0; right: 0; height: 6px; z-index: 100; background: repeating-linear-gradient(90deg,#fff 0,#fff 14px,#000 14px,#000 28px); opacity: 0.8; }
+.checker-b { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; z-index: 100; background: repeating-linear-gradient(90deg,#fff 0,#fff 14px,#000 14px,#000 28px); opacity: 0.8; }
 
-  /* CHECKER STRIP */
-  .checker-strip {
-    position: fixed; top: 0; left: 0; right: 0; height: 6px; z-index: 100;
-    background: repeating-linear-gradient(90deg, #fff 0px, #fff 14px, #000 14px, #000 28px);
-    opacity: 0.85;
-  }
-  .checker-strip-bottom {
-    position: fixed; bottom: 0; left: 0; right: 0; height: 6px; z-index: 100;
-    background: repeating-linear-gradient(90deg, #fff 0px, #fff 14px, #000 14px, #000 28px);
-    opacity: 0.85;
-  }
+/* HEADER */
+.hdr { position: fixed; top: 6px; left: 0; right: 0; z-index: 50; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: rgba(10,31,22,0.97); border-bottom: 1px solid var(--border); }
+.hdr-title { font-family: 'Bitter', serif; font-size: 15px; font-weight: 700; color: var(--silver-light); }
+.hdr-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); animation: pulse 1.8s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.8);} }
 
-  /* SCREENS */
-  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 10; transition: opacity 0.3s; }
-  .screen.hidden { display: none; }
+/* SCREENS */
+.screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 10; overflow-y: auto; }
+.screen.hidden { display: none; }
 
-  /* HEADER BADGE */
-  .kiosk-header {
-    position: fixed; top: 6px; left: 0; right: 0; z-index: 50;
-    display: flex; align-items: center; justify-content: center; gap: 12px;
-    padding: 10px 20px;
-    background: rgba(10,31,22,0.95);
-    border-bottom: 1px solid var(--border);
-  }
-  .kiosk-title { font-family: 'Bitter', serif; font-size: 15px; font-weight: 700; color: var(--silver-light); letter-spacing: 0.03em; }
-  .kiosk-sub { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
-  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); animation: pulse 1.8s infinite; flex-shrink: 0; }
-  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+/* BACK BTN */
+.back-btn { position: fixed; top: 56px; left: 16px; z-index: 60; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 14px; letter-spacing: 0.06em; cursor: pointer; padding: 8px 0; display: flex; align-items: center; gap: 4px; }
 
-  /* HOME SCREEN */
-  #screen-home { padding-top: 80px; }
-  .home-hero { text-align: center; margin-bottom: 40px; }
-  .home-flag { font-size: 52px; margin-bottom: 8px; }
-  .home-event { font-family: 'Bitter', serif; font-size: 38px; font-weight: 900; color: var(--silver-light); letter-spacing: -0.01em; line-height: 1; }
-  .home-sub { font-size: 16px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 6px; }
-  .home-tap { font-family: 'Bitter', serif; font-size: 22px; color: var(--silver); margin-top: 32px; }
-  .tap-hint { font-size: 14px; color: var(--muted); margin-top: 8px; letter-spacing: 0.06em; text-transform: uppercase; }
+/* HOME */
+.home-flag { font-size: 56px; margin-bottom: 8px; text-align: center; }
+.home-title { font-family: 'Bitter', serif; font-size: 36px; font-weight: 900; color: var(--silver-light); text-align: center; }
+.home-sub { font-size: 14px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; text-align: center; margin-top: 4px; margin-bottom: 40px; }
+.tap-circle { width: 220px; height: 220px; border-radius: 50%; border: 2px solid var(--border); background: var(--card); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+.tap-circle:active { transform: scale(0.96); background: var(--card-hover); border-color: var(--silver); }
+.tap-icon { font-size: 60px; }
+.tap-label { font-family: 'Bitter', serif; font-size: 15px; color: var(--silver); margin-top: 8px; }
 
-  .tap-target {
-    width: 240px; height: 240px; border-radius: 50%;
-    border: 2px solid var(--border);
-    background: var(--card);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.2s;
-    margin: 0 auto;
-  }
-  .tap-target:active { transform: scale(0.96); background: var(--card-hover); border-color: var(--silver); }
-  .tap-target-icon { font-size: 64px; }
-  .tap-target-label { font-family: 'Bitter', serif; font-size: 16px; color: var(--silver); margin-top: 8px; }
+/* LOCKED */
+.locked-icon { font-size: 52px; margin-bottom: 16px; }
+.locked-title { font-family: 'Bitter', serif; font-size: 26px; color: var(--silver-light); text-align: center; }
+.locked-sub { font-size: 14px; color: var(--muted); text-align: center; margin-top: 10px; max-width: 300px; line-height: 1.5; }
 
-  /* ROLE SCREEN */
-  .screen-title { font-family: 'Bitter', serif; font-size: 26px; font-weight: 700; color: var(--silver-light); text-align: center; margin-bottom: 6px; }
-  .screen-sub { font-size: 14px; color: var(--muted); text-align: center; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 28px; }
+/* SCREEN TITLES */
+.s-title { font-family: 'Bitter', serif; font-size: 24px; font-weight: 700; color: var(--silver-light); text-align: center; margin-bottom: 4px; }
+.s-sub { font-size: 13px; color: var(--muted); text-align: center; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 24px; }
 
-  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 500px; }
-  .role-btn {
-    background: var(--card); border: 1.5px solid var(--border); border-radius: 12px;
-    padding: 24px 16px; text-align: center; cursor: pointer; transition: all 0.18s;
-  }
-  .role-btn:active { transform: scale(0.97); background: var(--card-hover); border-color: var(--silver); }
-  .role-btn.selected { border-color: var(--red); background: rgba(215,38,61,0.12); }
-  .role-icon { font-size: 32px; margin-bottom: 8px; }
-  .role-name { font-family: 'Bitter', serif; font-size: 18px; font-weight: 700; color: var(--silver-light); }
-  .role-desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
+/* ROLE GRID */
+.role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 480px; }
+.role-btn { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all 0.18s; }
+.role-btn:active, .role-btn.selected { border-color: var(--red); background: rgba(215,38,61,0.12); transform: scale(0.97); }
+.role-icon { font-size: 30px; margin-bottom: 8px; }
+.role-name { font-family: 'Bitter', serif; font-size: 17px; font-weight: 700; color: var(--silver-light); }
+.role-desc { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
-  /* FLEX BANNER */
-  .flex-banner {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--card); border: 1.5px solid var(--border); border-radius: 10px;
-    padding: 12px 16px; margin-top: 16px; cursor: pointer; transition: all 0.2s;
-    width: 100%; max-width: 500px;
-  }
-  .flex-banner.active { border-color: var(--red); background: rgba(215,38,61,0.1); }
-  .flex-icon { font-size: 18px; }
-  .flex-text { flex: 1; }
-  .flex-label { font-size: 14px; color: var(--silver); font-weight: 600; }
-  .flex-sublabel { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .flex-toggle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s; }
-  .flex-banner.active .flex-toggle { border-color: var(--red); background: var(--red); color: #fff; }
+/* FLEX BANNER */
+.flex-banner { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-top: 14px; cursor: pointer; transition: all 0.2s; width: 100%; max-width: 480px; }
+.flex-banner.on { border-color: var(--red); background: rgba(215,38,61,0.1); }
+.flex-label { flex: 1; }
+.flex-label-main { font-size: 14px; color: var(--silver); font-weight: 600; }
+.flex-label-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.flex-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s; }
+.flex-banner.on .flex-check { border-color: var(--red); background: var(--red); color: #fff; }
 
-  /* NAME SCREEN */
-  .search-box {
-    width: 100%; max-width: 480px;
-    background: var(--card); border: 1.5px solid var(--border); border-radius: 10px;
-    padding: 14px 16px; font-size: 16px; color: var(--silver-light);
-    font-family: 'Barlow Condensed', sans-serif; outline: none;
-    margin-bottom: 14px;
-    -webkit-appearance: none;
-  }
-  .search-box:focus { border-color: var(--silver); }
-  .search-box::placeholder { color: var(--muted); }
+/* NAME SCREEN */
+.search-box { width: 100%; max-width: 460px; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 16px; color: var(--silver-light); font-family: 'Barlow Condensed', sans-serif; outline: none; margin-bottom: 12px; -webkit-appearance: none; }
+.search-box:focus { border-color: var(--silver); }
+.name-list { width: 100%; max-width: 460px; overflow-y: auto; max-height: calc(100vh - 280px); }
+.name-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 12px; }
+.name-item:active { background: var(--card-hover); transform: scale(0.99); }
+.team-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.name-main { font-family: 'Bitter', serif; font-size: 16px; color: var(--silver-light); }
+.name-team { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.name-arrow { color: var(--muted); font-size: 18px; }
+.flex-tag { background: rgba(215,38,61,0.2); color: var(--red); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
 
-  .name-list { width: 100%; max-width: 480px; overflow-y: auto; flex: 1; }
-  .name-item {
-    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 16px; margin-bottom: 8px; cursor: pointer; transition: all 0.18s;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .name-item:active { background: var(--card-hover); border-color: var(--silver); transform: scale(0.99); }
-  .name-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--bg3); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--silver); flex-shrink: 0; }
-  .name-info { flex: 1; }
-  .name-main { font-family: 'Bitter', serif; font-size: 16px; color: var(--silver-light); }
-  .name-team { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .name-arrow { color: var(--muted); font-size: 18px; }
+/* DRIVER BANNER */
+.driver-banner { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; width: 100%; max-width: 460px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.db-name { font-family: 'Bitter', serif; font-size: 15px; color: var(--silver-light); }
+.db-team { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-  /* CATEGORY SCREEN */
-  .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 500px; overflow-y: auto; flex: 1; }
-  .cat-btn {
-    background: var(--card); border: 1.5px solid var(--border); border-radius: 10px;
-    padding: 16px 12px; cursor: pointer; transition: all 0.18s; text-align: center;
-  }
-  .cat-btn:active { transform: scale(0.97); background: var(--card-hover); border-color: var(--silver); }
-  .cat-name { font-family: 'Bitter', serif; font-size: 14px; color: var(--silver-light); line-height: 1.3; }
-  .cat-mult { font-size: 12px; color: var(--gold); margin-top: 4px; }
+/* CATEGORY GRID */
+.cat-screen-inner { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 460px; padding-top: 110px; padding-bottom: 20px; min-height: 100vh; }
+.cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.cat-btn { background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 18px 14px; cursor: pointer; transition: all 0.15s; text-align: center; user-select: none; }
+.cat-btn:active { transform: scale(0.97); background: var(--card-hover); border-color: var(--silver); }
+.cat-name { font-family: 'Bitter', serif; font-size: 14px; color: var(--silver-light); line-height: 1.3; }
+.cat-mult { font-size: 12px; color: var(--gold); margin-top: 5px; }
+.cat-sub { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.3; }
 
-  /* CART SCREEN */
-  .cart-list { width: 100%; max-width: 480px; overflow-y: auto; flex: 1; }
-  .cart-item {
-    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 16px; margin-bottom: 8px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .cart-item-name { flex: 1; font-family: 'Bitter', serif; font-size: 15px; color: var(--silver-light); }
-  .cart-item-bracket { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .qty-ctrl { display: flex; align-items: center; gap: 10px; }
-  .qty-btn { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg3); color: var(--silver); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-  .qty-btn:active { background: var(--card-hover); border-color: var(--silver); }
-  .qty-val { font-family: 'Bitter', serif; font-size: 20px; font-weight: 700; color: var(--silver-light); min-width: 28px; text-align: center; }
-  .cart-remove { color: var(--muted); font-size: 20px; cursor: pointer; padding: 4px; }
-  .cart-remove:active { color: var(--red); }
+/* CART SCREEN */
+.cart-screen-inner { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 460px; padding-top: 110px; padding-bottom: 20px; min-height: 100vh; }
+.cart-list { width: 100%; margin-bottom: 10px; }
+.cart-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+.cart-item-name { flex: 1; font-family: 'Bitter', serif; font-size: 15px; color: var(--silver-light); }
+.cart-item-bracket { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.qty-ctrl { display: flex; align-items: center; gap: 10px; }
+.qty-btn { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg3); color: var(--silver); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+.qty-btn:active { background: var(--card-hover); border-color: var(--silver); }
+.qty-val { font-family: 'Bitter', serif; font-size: 22px; font-weight: 700; color: var(--silver-light); min-width: 28px; text-align: center; }
+.cart-remove { color: var(--muted); font-size: 20px; cursor: pointer; padding: 6px; }
+.cart-remove:active { color: var(--red); }
+.cart-empty { text-align: center; padding: 30px; color: var(--muted); font-size: 15px; }
 
-  .cart-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 16px; }
+.add-more-btn { width: 100%; padding: 14px; border-radius: 10px; background: var(--card); border: 1.5px dashed var(--border); color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; text-transform: uppercase; transition: all 0.15s; margin-bottom: 14px; }
+.add-more-btn:active { border-color: var(--silver); color: var(--silver); }
 
-  /* BUTTONS */
-  .btn-row { display: flex; gap: 12px; width: 100%; max-width: 480px; margin-top: 16px; }
-  .btn {
-    flex: 1; padding: 16px; border-radius: 10px; border: none; cursor: pointer;
-    font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase; transition: all 0.18s;
-  }
-  .btn-primary { background: var(--red); color: #fff; }
-  .btn-primary:active { background: var(--red-dark); transform: scale(0.98); }
-  .btn-primary:disabled { background: var(--muted); cursor: default; }
-  .btn-secondary { background: var(--card); border: 1.5px solid var(--border); color: var(--silver); }
-  .btn-secondary:active { background: var(--card-hover); }
-  .btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--muted); }
+.btn-row { display: flex; gap: 12px; width: 100%; margin-top: 4px; }
+.btn { flex: 1; padding: 16px; border-radius: 10px; border: none; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; transition: all 0.15s; }
+.btn-primary { background: var(--red); color: #fff; }
+.btn-primary:active { background: var(--red-dark); transform: scale(0.98); }
+.btn-primary:disabled { background: var(--muted); cursor: default; opacity: 0.6; }
+.btn-secondary { background: var(--card); border: 1.5px solid var(--border); color: var(--silver); flex: 0.5; }
+.btn-secondary:active { background: var(--card-hover); }
 
-  /* CONFIRMATION / PR SCREENS */
-  .confirm-icon { font-size: 72px; margin-bottom: 16px; animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
-  @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-  .confirm-title { font-family: 'Bitter', serif; font-size: 32px; font-weight: 900; color: var(--silver-light); text-align: center; }
-  .confirm-detail { font-size: 16px; color: var(--muted); text-align: center; margin-top: 10px; max-width: 360px; line-height: 1.5; }
-  .confirm-bar { width: 100%; max-width: 360px; height: 4px; background: var(--border); border-radius: 2px; margin-top: 24px; overflow: hidden; }
-  .confirm-bar-fill { height: 100%; background: var(--red); border-radius: 2px; animation: fillBar 3s linear forwards; }
-  @keyframes fillBar { 0% { width: 0%; } 100% { width: 100%; } }
+/* CONFIRM */
+.confirm-icon { font-size: 68px; margin-bottom: 14px; animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+@keyframes popIn { 0%{transform:scale(0);opacity:0;}100%{transform:scale(1);opacity:1;} }
+.confirm-title { font-family: 'Bitter', serif; font-size: 30px; font-weight: 900; color: var(--silver-light); text-align: center; }
+.confirm-detail { font-size: 15px; color: var(--muted); text-align: center; margin-top: 10px; max-width: 340px; line-height: 1.5; }
+.progress-bar { width: 100%; max-width: 340px; height: 4px; background: var(--border); border-radius: 2px; margin-top: 24px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--red); border-radius: 2px; animation: fillBar 3s linear forwards; }
+@keyframes fillBar { 0%{width:0%;}100%{width:100%;} }
 
-  .pr-screen { background: linear-gradient(160deg, rgba(215,38,61,0.15) 0%, transparent 60%); }
-  .pr-badge { background: var(--red); color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 14px; border-radius: 20px; margin-bottom: 16px; }
-  .pr-number { font-family: 'Bitter', serif; font-size: 64px; font-weight: 900; color: var(--silver-light); line-height: 1; }
-  .pr-prev { font-size: 14px; color: var(--muted); margin-top: 8px; }
+/* PR SCREEN */
+.pr-badge { background: var(--red); color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 14px; border-radius: 20px; margin-bottom: 14px; }
+.pr-num { font-family: 'Bitter', serif; font-size: 60px; font-weight: 900; color: var(--silver-light); line-height: 1; }
+.pr-prev { font-size: 14px; color: var(--muted); margin-top: 8px; }
 
-  /* DAY LOCKED */
-  .locked-icon { font-size: 56px; margin-bottom: 16px; }
-  .locked-title { font-family: 'Bitter', serif; font-size: 28px; color: var(--silver-light); text-align: center; }
-  .locked-sub { font-size: 15px; color: var(--muted); text-align: center; margin-top: 10px; max-width: 320px; line-height: 1.5; }
+/* OFFLINE BADGE */
+#offline-badge { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; z-index: 150; display: none; }
+#offline-badge.on { display: block; }
 
-  /* STEP INDICATOR */
-  .step-indicator {
-    display: flex; align-items: center; gap: 8px;
-    position: fixed; top: 52px; left: 0; right: 0; z-index: 40;
-    padding: 8px 20px; background: rgba(10,31,22,0.9);
-    border-bottom: 1px solid var(--border);
-    font-size: 12px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase;
-  }
-  .step-crumb { display: flex; align-items: center; gap: 6px; }
-  .step-crumb.active { color: var(--silver-light); }
-  .step-sep { color: var(--border); }
-
-  /* IDLE OVERLAY */
-  #idle-overlay {
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(10,31,22,0.97); display: none;
-    flex-direction: column; align-items: center; justify-content: center;
-    cursor: pointer;
-  }
-  #idle-overlay.visible { display: flex; }
-  .idle-text { font-family: 'Bitter', serif; font-size: 28px; color: var(--silver); text-align: center; }
-  .idle-sub { font-size: 15px; color: var(--muted); margin-top: 10px; }
-
-  /* OFFLINE BADGE */
-  #offline-badge {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: var(--gold); color: #000; padding: 6px 16px; border-radius: 20px;
-    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; z-index: 150;
-    display: none;
-  }
-  #offline-badge.visible { display: block; }
-
-  /* DRIVER STATS PANEL */
-  .stats-panel {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px; width: 100%; max-width: 480px; margin-top: 16px;
-    display: flex; gap: 20px;
-  }
-  .stat-block { flex: 1; text-align: center; }
-  .stat-val { font-family: 'Bitter', serif; font-size: 28px; font-weight: 900; color: var(--silver-light); }
-  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
-
-  /* TEAM COLOR DOTS */
-  .team-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-
-  /* BACK BUTTON */
-  .back-btn {
-    position: fixed; top: 52px; left: 16px; z-index: 60;
-    background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
-    font-size: 14px; letter-spacing: 0.06em; cursor: pointer; padding: 8px 0;
-    display: flex; align-items: center; gap: 4px;
-  }
-  .back-btn:active { color: var(--silver); }
-
-  /* ADD MORE BTN */
-  .add-more-btn {
-    width: 100%; max-width: 480px; padding: 14px; border-radius: 10px;
-    background: var(--card); border: 1.5px dashed var(--border); color: var(--muted);
-    font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600;
-    letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase; transition: all 0.18s;
-    margin-top: 8px;
-  }
-  .add-more-btn:active { border-color: var(--silver); color: var(--silver); }
-
-  .driver-banner {
-    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-    padding: 12px 16px; width: 100%; max-width: 480px; margin-bottom: 16px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .driver-banner-name { font-family: 'Bitter', serif; font-size: 16px; color: var(--silver-light); }
-  .driver-banner-team { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-  .flex-tag { background: rgba(215,38,61,0.2); color: var(--red); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; margin-left: 6px; }
+/* IDLE OVERLAY */
+#idle-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(10,31,22,0.97); display: none; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+#idle-overlay.on { display: flex; }
+.idle-text { font-family: 'Bitter', serif; font-size: 26px; color: var(--silver); text-align: center; margin-top: 16px; }
+.idle-sub { font-size: 14px; color: var(--muted); margin-top: 8px; }
 </style>
 </head>
 <body>
+<div class="checker"></div>
+<div class="checker-b"></div>
 
-<!-- Mountain background -->
-<div class="mountain-bg">
-  <svg viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet">
-    <polygon points="0,300 150,160 300,300" fill="rgba(20,60,35,0.6)"/>
-    <polygon points="100,300 280,120 460,300" fill="rgba(15,50,28,0.7)"/>
-    <polygon points="300,300 500,80 700,300" fill="rgba(20,60,35,0.65)"/>
-    <polygon points="500,300 680,140 860,300" fill="rgba(15,45,25,0.7)"/>
-    <polygon points="700,300 900,60 1100,300" fill="rgba(20,60,35,0.6)"/>
-    <polygon points="900,300 1060,110 1200,300" fill="rgba(15,50,28,0.65)"/>
-    <polygon points="0,300 200,200 400,300" fill="rgba(10,35,20,0.8)"/>
-    <polygon points="350,300 550,180 750,300" fill="rgba(10,35,20,0.8)"/>
-    <polygon points="650,300 850,170 1050,300" fill="rgba(10,35,20,0.8)"/>
-    <polygon points="900,300 1100,200 1200,300" fill="rgba(10,35,20,0.75)"/>
-  </svg>
-</div>
-
-<div class="checker-strip"></div>
-<div class="checker-strip-bottom"></div>
-
-<!-- HEADER -->
-<div class="kiosk-header">
+<div class="hdr">
   <div class="live-dot"></div>
   <div>
-    <div class="kiosk-title">Austrian Grand Prix</div>
+    <div class="hdr-title">Austrian Grand Prix</div>
+    <div class="hdr-sub">Red Bull Ring · Self-Report Kiosk</div>
   </div>
-  <div class="kiosk-sub">Red Bull Ring · Spielberg</div>
+  <div id="queue-badge" style="font-size:11px;color:var(--muted);"></div>
 </div>
 
-<!-- IDLE OVERLAY -->
 <div id="idle-overlay" onclick="dismissIdle()">
-  <div style="font-size:56px;margin-bottom:16px;">🏎️</div>
+  <div style="font-size:52px;">🏎️</div>
   <div class="idle-text">Tap to log your contribution</div>
-  <div class="idle-sub">Austrian Grand Prix — Self-Report Kiosk</div>
+  <div class="idle-sub">Austrian Grand Prix Kiosk</div>
 </div>
 
-<!-- OFFLINE BADGE -->
 <div id="offline-badge">⚡ Offline — entries queued</div>
 
-<!-- SCREEN: HOME -->
-<div class="screen" id="screen-home">
-  <div class="home-hero">
-    <div class="home-flag">🇦🇹</div>
-    <div class="home-event">Austrian Grand Prix</div>
-    <div class="home-sub">Red Bull Ring · Spielberg</div>
+<!-- HOME -->
+<div class="screen" id="s-home">
+  <div class="home-flag">🇦🇹</div>
+  <div class="home-title">Austrian Grand Prix</div>
+  <div class="home-sub">Red Bull Ring · Spielberg</div>
+  <div class="tap-circle" id="tap-start">
+    <div class="tap-icon">🏁</div>
+    <div class="tap-label">Log My Score</div>
   </div>
-  <div class="tap-target" onclick="goToRole()">
-    <div class="tap-target-icon">🏁</div>
-    <div class="tap-target-label">Log My Score</div>
-  </div>
-  <div class="tap-hint" style="margin-top:24px;">Tap to start</div>
 </div>
 
-<!-- SCREEN: DAY LOCKED -->
-<div class="screen hidden" id="screen-locked">
+<!-- LOCKED -->
+<div class="screen hidden" id="s-locked">
   <div class="locked-icon">🔒</div>
   <div class="locked-title">Day Not Open Yet</div>
-  <div class="locked-sub">The competition day hasn't been opened by your manager. Check back soon!</div>
-  <button class="btn btn-secondary" style="max-width:300px;margin-top:28px;" onclick="goHome()">Back to Home</button>
+  <div class="locked-sub">Your manager hasn't opened today's race yet. Check back soon!</div>
+  <button class="btn btn-secondary" style="max-width:280px;margin-top:28px;flex:none;" onclick="show('s-home')">← Back</button>
 </div>
 
-<!-- SCREEN: ROLE -->
-<div class="screen hidden" id="screen-role" style="padding-top:100px;">
-  <div class="screen-title">Select Your Role</div>
-  <div class="screen-sub">Or use Flex Mode if covering another department</div>
+<!-- ROLE -->
+<div class="screen hidden" id="s-role" style="padding-top:70px;justify-content:flex-start;">
+  <div style="height:60px;"></div>
+  <div class="s-title">Select Your Role</div>
+  <div class="s-sub">Or use Flex Mode if covering another department</div>
   <div class="role-grid" id="role-grid">
-    <div class="role-btn" onclick="selectRole('PZ')" id="role-PZ">
+    <div class="role-btn" data-role="PZ">
       <div class="role-icon">🏎️</div>
       <div class="role-name">Product Zone</div>
-      <div class="role-desc">iPhone · Mac · iPad</div>
+      <div class="role-desc">AppleCare · Services · Intros</div>
     </div>
-    <div class="role-btn" onclick="selectRole('GB')" id="role-GB">
+    <div class="role-btn" data-role="GB">
       <div class="role-icon">🔧</div>
       <div class="role-name">Genius Bar</div>
-      <div class="role-desc">Repairs · Service</div>
+      <div class="role-desc">Repairs · Conversions · Intros</div>
     </div>
-    <div class="role-btn" onclick="selectRole('Forum')" id="role-Forum">
+    <div class="role-btn" data-role="Forum">
       <div class="role-icon">🎨</div>
       <div class="role-name">Forum</div>
-      <div class="role-desc">Today at Apple</div>
+      <div class="role-desc">Today at Apple · Sessions</div>
     </div>
-    <div class="role-btn" onclick="selectRole('Ops')" id="role-Ops">
+    <div class="role-btn" data-role="Ops">
       <div class="role-icon">📦</div>
       <div class="role-name">Operations</div>
-      <div class="role-desc">Fulfillment · Inventory</div>
+      <div class="role-desc">Fulfillment · Inventory · Runs</div>
     </div>
   </div>
-  <div class="flex-banner" id="flex-banner" onclick="toggleFlex()">
-    <div class="flex-icon">🔄</div>
-    <div class="flex-text">
-      <div class="flex-label">Covering a different role today?</div>
-      <div class="flex-sublabel" id="flex-sublabel">Tap to enable Flex Mode — log under any bracket</div>
+  <div class="flex-banner" id="flex-banner">
+    <div style="font-size:18px;">🔄</div>
+    <div class="flex-label">
+      <div class="flex-label-main">Covering a different role today?</div>
+      <div class="flex-label-sub" id="flex-sub">Tap to enable Flex Mode</div>
     </div>
-    <div class="flex-toggle" id="flex-toggle">✓</div>
+    <div class="flex-check" id="flex-check">✓</div>
   </div>
-  <div class="btn-row" style="max-width:500px;">
-    <button class="btn btn-secondary" onclick="goHome()">← Back</button>
+  <div class="btn-row" style="max-width:480px;margin-top:16px;">
+    <button class="btn btn-secondary" onclick="show('s-home')">← Back</button>
   </div>
 </div>
 
-<!-- SCREEN: NAME -->
-<div class="screen hidden" id="screen-name" style="padding-top:110px; padding-bottom:80px;">
-  <button class="back-btn" onclick="goToRole()">← Role</button>
-  <div class="screen-title" id="name-screen-title">Who are you?</div>
-  <div class="screen-sub" id="name-screen-sub">Search your name below</div>
-  <input class="search-box" type="text" id="name-search" placeholder="Type your name..." oninput="filterNames()" autocomplete="off" autocorrect="off" spellcheck="false">
+<!-- NAME -->
+<div class="screen hidden" id="s-name" style="justify-content:flex-start;padding-top:0;">
+  <button class="back-btn" onclick="show('s-role')">← Role</button>
+  <div style="height:110px;width:100%;max-width:460px;flex-shrink:0;"></div>
+  <div class="s-title" id="name-title">Who are you?</div>
+  <div class="s-sub" id="name-sub">Search your name below</div>
+  <input class="search-box" type="text" id="name-search" placeholder="Type your name..." autocomplete="off" autocorrect="off" spellcheck="false">
   <div class="name-list" id="name-list"></div>
 </div>
 
-<!-- SCREEN: CATEGORY -->
-<div class="screen hidden" id="screen-category" style="padding-top:110px; padding-bottom:80px;">
-  <button class="back-btn" onclick="goToName()">← Name</button>
-  <div class="driver-banner" id="driver-banner"></div>
-  <div class="screen-title" id="cat-screen-title">What did you do?</div>
-  <div class="screen-sub" id="cat-screen-sub">Tap a category to add to cart</div>
-  <div class="cat-grid" id="cat-grid"></div>
+<!-- CATEGORY -->
+<div class="screen hidden" id="s-category" style="justify-content:flex-start;padding:0;overflow-y:auto;">
+  <button class="back-btn" onclick="show('s-name')">← Name</button>
+  <div class="cat-screen-inner">
+    <div class="driver-banner" id="cat-driver-banner"></div>
+    <div class="s-title" id="cat-title">What did you do?</div>
+    <div class="s-sub" id="cat-sub">Tap to add to cart</div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </div>
 </div>
 
-<!-- SCREEN: CART -->
-<div class="screen hidden" id="screen-cart" style="padding-top:110px; padding-bottom:80px;">
+<!-- CART -->
+<div class="screen hidden" id="s-cart" style="justify-content:flex-start;padding:0;overflow-y:auto;">
   <button class="back-btn" onclick="goToCategory()">← Add More</button>
-  <div class="driver-banner" id="driver-banner-cart"></div>
-  <div class="screen-title">Review & Submit</div>
-  <div class="screen-sub">Adjust quantities, then hit submit</div>
-  <div class="cart-list" id="cart-list"></div>
-  <button class="add-more-btn" onclick="goToCategory()">+ Add Another Category</button>
-  <div class="stats-panel" id="stats-panel">
-    <div class="stat-block">
-      <div class="stat-val" id="stat-today">—</div>
-      <div class="stat-label">My Points Today</div>
+  <div class="cart-screen-inner">
+    <div class="driver-banner" id="cart-driver-banner"></div>
+    <div class="s-title">Review & Submit</div>
+    <div class="s-sub">Adjust quantities then submit</div>
+    <div class="cart-list" id="cart-list"></div>
+    <button class="add-more-btn" id="add-more-btn">+ Add Another Category</button>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="show('s-home')">Cancel</button>
+      <button class="btn btn-primary" id="submit-btn">Submit →</button>
     </div>
-    <div class="stat-block">
-      <div class="stat-val" id="stat-season">—</div>
-      <div class="stat-label">Season Total</div>
-    </div>
-    <div class="stat-block">
-      <div class="stat-val" id="stat-team">—</div>
-      <div class="stat-label">Team Total</div>
-    </div>
-  </div>
-  <div class="btn-row">
-    <button class="btn btn-secondary" onclick="goHome()" style="flex:0.4;">Cancel</button>
-    <button class="btn btn-primary" id="submit-btn" onclick="submitCart()">Submit →</button>
   </div>
 </div>
 
-<!-- SCREEN: CONFIRM -->
-<div class="screen hidden" id="screen-confirm" style="text-align:center;">
+<!-- CONFIRM -->
+<div class="screen hidden" id="s-confirm">
   <div class="confirm-icon">✅</div>
   <div class="confirm-title">Logged!</div>
   <div class="confirm-detail" id="confirm-detail">Your entries have been submitted.</div>
-  <div class="confirm-bar"><div class="confirm-bar-fill" id="confirm-bar-fill"></div></div>
+  <div class="progress-bar"><div class="progress-fill" id="confirm-fill"></div></div>
 </div>
 
-<!-- SCREEN: PR -->
-<div class="screen pr-screen hidden" id="screen-pr" style="text-align:center;">
-  <div class="pr-badge">🏅 New Personal Record</div>
-  <div class="confirm-icon" style="font-size:64px;">🏅</div>
-  <div class="confirm-title" id="pr-driver-name"></div>
-  <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:0.1em;" id="pr-category-name"></div>
-  <div class="pr-number" id="pr-number"></div>
+<!-- PR -->
+<div class="screen hidden" id="s-pr" style="background:linear-gradient(160deg,rgba(215,38,61,0.15) 0%,transparent 60%);">
+  <div class="pr-badge">🏅 Personal Record</div>
+  <div class="confirm-icon" style="font-size:60px;">🏅</div>
+  <div class="confirm-title" id="pr-name"></div>
+  <div style="font-size:16px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.1em;" id="pr-cat"></div>
+  <div class="pr-num" id="pr-num"></div>
   <div class="pr-prev" id="pr-prev"></div>
-  <div class="confirm-bar" style="max-width:360px;"><div class="confirm-bar-fill" id="pr-bar-fill" style="animation:fillBar 5s linear forwards;"></div></div>
+  <div class="progress-bar" style="max-width:340px;"><div class="progress-fill" id="pr-fill" style="animation:fillBar 5s linear forwards;"></div></div>
 </div>
 
 <script>
-// ===================== CONFIG =====================
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxoFKqfKifXlryGg99H4hwRDPaw0yBMWjGNuNjX3tYcvoxrkz6Y6N7QNud1A4OJmAqY/exec';
-const PIN = '0825';
-const IDLE_TIMEOUT = 45000;
-const RETURN_TIMEOUT = 3000;
-const PR_TIMEOUT = 5000;
+// ─── SYNC LAYER (inline — proven CGP pattern) ────────────────────────
+var SHEET_URL = 'https://script.google.com/macros/s/AKfycbxoFKqfKifXlryGg99H4hwRDPaw0yBMWjGNuNjX3tYcvoxrkz6Y6N7QNud1A4OJmAqY/exec';
 
-// ===================== DATA =====================
-const CONSTRUCTORS = {
-  'Ferrari': '#DC0000',
-  'McLaren': '#FF8000',
-  'Red Bull': '#1E5BC6',
-  'Mercedes': '#00D2BE',
-  'Aston Martin': '#229971',
-  'Alpine': '#0078FF',
-  'Williams': '#1868DB',
-  'Racing Bulls': '#2647D8',
-  'Haas': '#B0B3B8',
-  'Cadillac': '#1A1A1A',
+function sheetPost(payload) {
+  return fetch(SHEET_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).then(function(r) { return r.json(); });
+}
+
+function sheetGet(params) {
+  var qs = Object.keys(params).map(function(k) {
+    return k + '=' + encodeURIComponent(params[k]);
+  }).join('&');
+  return fetch(SHEET_URL + '?' + qs).then(function(r) { return r.json(); });
+}
+
+// ─── DATA ────────────────────────────────────────────────────────────
+var TEAM_COLORS = {
+  'Ferrari':'#DC0000','McLaren':'#FF8000','Red Bull':'#1E5BC6',
+  'Mercedes':'#00D2BE','Aston Martin':'#229971','Alpine':'#0078FF',
+  'Williams':'#1868DB','Racing Bulls':'#2647D8','Haas':'#B0B3B8','Cadillac':'#1A1A1A'
 };
 
-const CATEGORIES = {
-  PZ: [
-    { id: 'CAT01', name: 'iPhone AppleCare', mult: 3 },
-    { id: 'CAT02', name: 'iPad/Watch/Mac AppleCare', mult: 1 },
-    { id: 'CAT03', name: 'Biz Intro', mult: 2 },
-    { id: 'CAT04', name: 'Service Sign-up Customer', mult: 2, sub: 'Count 1 per customer — not per service enrolled' },
-    { id: 'CAT05', name: 'Today at Apple Sign-up', mult: 1 },
-  ],
-  GB: [
-    { id: 'CAT06', name: 'Completed iPhone or Mac Repair', mult: 3 },
-    { id: 'CAT07', name: 'GB Appt', mult: 0.5 },
-    { id: 'CAT08', name: 'AppleCare Conversion', mult: 3 },
-    { id: 'CAT09', name: 'Conversion', mult: 2 },
-    { id: 'CAT10', name: 'Biz Intro', mult: 2 },
-    { id: 'CAT11', name: 'Today at Apple Sign-up', mult: 1 },
-  ],
-  Forum: [
-    { id: 'CAT12', name: 'Today at Apple Session Led', mult: 5 },
-    { id: 'CAT13', name: 'Today at Apple Sign-up', mult: 1 },
-    { id: 'CAT14', name: 'Today at Apple Conversion', mult: 2 },
-    { id: 'CAT15', name: 'Tip Session Delivered', mult: 2 },
-    { id: 'CAT16', name: 'Biz Intro', mult: 2 },
-    { id: 'CAT17', name: '1 Hour of Setup Worked', mult: 2 },
-  ],
-  Ops: [
-    { id: 'CAT18', name: 'APU/IDL Fulfilled', mult: 0.5 },
-    { id: 'CAT19', name: 'Run', mult: 0.125 },
-    { id: 'CAT20', name: 'SFS Fulfilled', mult: 0.5 },
-    { id: 'CAT21', name: 'Pallet Broken Down', mult: 2 },
-    { id: 'CAT22', name: 'Biz Intro', mult: 2 },
-    { id: 'CAT23', name: 'Today at Apple Sign-up', mult: 1 },
-  ],
-};
-
-// Sample drivers — replace with full roster from Apps Script
-const DRIVERS = [
-  { id: 'D001', name: 'Ronald Joseph', role: 'PZ', constructor: 'Ferrari' },
-  { id: 'D002', name: 'Miqdad Khakoo', role: 'PZ', constructor: 'Ferrari' },
-  { id: 'D003', name: 'Eddie Blanck', role: 'PZ', constructor: 'Ferrari' },
-  { id: 'D004', name: 'Janet Ayala', role: 'PZ', constructor: 'Ferrari' },
-  { id: 'D005', name: 'Chad Gidaya Jr', role: 'GB', constructor: 'Ferrari' },
-  { id: 'D006', name: 'Valery Perez Vega', role: 'GB', constructor: 'Ferrari' },
-  { id: 'D007', name: 'Regina Talain', role: 'GB', constructor: 'Ferrari' },
-  { id: 'D008', name: 'Kazuhiro Itoh', role: 'Forum', constructor: 'Ferrari' },
-  { id: 'D009', name: 'Rafa Osoria Jr.', role: 'Ops', constructor: 'Ferrari' },
-  { id: 'D010', name: 'Crystal Garcia', role: 'Ops', constructor: 'Ferrari' },
-  { id: 'D011', name: 'Brian Nera', role: 'PZ', constructor: 'McLaren' },
-  { id: 'D012', name: 'Nick Sturz', role: 'PZ', constructor: 'McLaren' },
-  { id: 'D013', name: 'Sergio Brito', role: 'PZ', constructor: 'McLaren' },
-  { id: 'D014', name: 'Devon Rodriguez', role: 'PZ', constructor: 'McLaren' },
-  { id: 'D015', name: 'Ryon Martinez', role: 'GB', constructor: 'McLaren' },
-  { id: 'D016', name: 'Syan Haghiri', role: 'GB', constructor: 'McLaren' },
-  { id: 'D017', name: 'Josias Ezquivel Escobar', role: 'GB', constructor: 'McLaren' },
-  { id: 'D018', name: 'Cybel Gomez', role: 'GB', constructor: 'McLaren' },
-  { id: 'D019', name: 'Crystal Salinas', role: 'Forum', constructor: 'McLaren' },
-  { id: 'D020', name: 'Felipe Zuniga', role: 'Ops', constructor: 'McLaren' },
-  { id: 'D021', name: 'Ryan Leynes', role: 'PZ', constructor: 'Red Bull' },
-  { id: 'D022', name: 'Sydnee Rosner', role: 'PZ', constructor: 'Red Bull' },
-  { id: 'D023', name: 'Rachel Byrnes', role: 'PZ', constructor: 'Red Bull' },
-  { id: 'D024', name: 'David Gonzalez', role: 'PZ', constructor: 'Red Bull' },
-  { id: 'D025', name: 'Christian Badilla', role: 'GB', constructor: 'Red Bull' },
-  { id: 'D026', name: 'Ivan Jackson', role: 'GB', constructor: 'Red Bull' },
-  { id: 'D027', name: 'Gil Sanchez', role: 'GB', constructor: 'Red Bull' },
-  { id: 'D028', name: 'Devin Flores', role: 'GB', constructor: 'Red Bull' },
-  { id: 'D029', name: 'Mike Ladia', role: 'Forum', constructor: 'Red Bull' },
-  { id: 'D030', name: 'America Del Rivero', role: 'Ops', constructor: 'Red Bull' },
-  { id: 'D031', name: 'Brayden Bennett', role: 'PZ', constructor: 'Mercedes' },
-  { id: 'D032', name: 'Mechan Williams', role: 'PZ', constructor: 'Mercedes' },
-  { id: 'D033', name: 'Mathew Navarrete', role: 'PZ', constructor: 'Mercedes' },
-  { id: 'D034', name: 'Matthew Bahena', role: 'PZ', constructor: 'Mercedes' },
-  { id: 'D035', name: 'Anthony Lopez', role: 'GB', constructor: 'Mercedes' },
-  { id: 'D036', name: 'Jesus Barboza', role: 'GB', constructor: 'Mercedes' },
-  { id: 'D037', name: 'Andrew Catalan', role: 'GB', constructor: 'Mercedes' },
-  { id: 'D038', name: 'Nick Ramos', role: 'GB', constructor: 'Mercedes' },
-  { id: 'D039', name: 'Austin Artinger', role: 'Forum', constructor: 'Mercedes' },
-  { id: 'D040', name: 'Lesley Vazquez', role: 'Ops', constructor: 'Mercedes' },
-  { id: 'D041', name: 'Krystell Barreto', role: 'PZ', constructor: 'Aston Martin' },
-  { id: 'D042', name: 'Malik Smith', role: 'PZ', constructor: 'Aston Martin' },
-  { id: 'D043', name: 'Jessie Effendi', role: 'PZ', constructor: 'Aston Martin' },
-  { id: 'D044', name: 'Jesus Espana Jr.', role: 'PZ', constructor: 'Aston Martin' },
-  { id: 'D045', name: 'Leslie Rincon-Lares', role: 'GB', constructor: 'Aston Martin' },
-  { id: 'D046', name: 'Dom Sanchez', role: 'GB', constructor: 'Aston Martin' },
-  { id: 'D047', name: 'Robby Sherman', role: 'GB', constructor: 'Aston Martin' },
-  { id: 'D048', name: 'Saul Reyes', role: 'GB', constructor: 'Aston Martin' },
-  { id: 'D049', name: 'Christian Gutierrez', role: 'Forum', constructor: 'Aston Martin' },
-  { id: 'D050', name: 'Ryan Cullen', role: 'Ops', constructor: 'Aston Martin' },
-  { id: 'D051', name: 'Phillip Cendana', role: 'PZ', constructor: 'Alpine' },
-  { id: 'D052', name: 'Lizz Sarinana', role: 'PZ', constructor: 'Alpine' },
-  { id: 'D053', name: 'Johnny Vedolla', role: 'PZ', constructor: 'Alpine' },
-  { id: 'D054', name: 'Izzy Arias', role: 'PZ', constructor: 'Alpine' },
-  { id: 'D055', name: 'Mayra Gonzalez De La Torres', role: 'GB', constructor: 'Alpine' },
-  { id: 'D056', name: 'SunDo Kim', role: 'GB', constructor: 'Alpine' },
-  { id: 'D057', name: 'Karamoko Kane', role: 'GB', constructor: 'Alpine' },
-  { id: 'D058', name: 'Gavin Tilles', role: 'GB', constructor: 'Alpine' },
-  { id: 'D059', name: 'Darnell Burns', role: 'Forum', constructor: 'Alpine' },
-  { id: 'D060', name: 'Asher Reeves', role: 'Ops', constructor: 'Alpine' },
-  { id: 'D061', name: 'Karissa DeVary', role: 'PZ', constructor: 'Williams' },
-  { id: 'D062', name: 'Pedro Negron', role: 'PZ', constructor: 'Williams' },
-  { id: 'D063', name: 'Pedro Lozano', role: 'PZ', constructor: 'Williams' },
-  { id: 'D064', name: 'Michael Monge', role: 'PZ', constructor: 'Williams' },
-  { id: 'D065', name: 'David Mendiola', role: 'PZ', constructor: 'Williams' },
-  { id: 'D066', name: 'Ammar Khakoo', role: 'GB', constructor: 'Williams' },
-  { id: 'D067', name: 'Justin Drummond', role: 'GB', constructor: 'Williams' },
-  { id: 'D068', name: 'Shane Howard', role: 'GB', constructor: 'Williams' },
-  { id: 'D069', name: 'Andres Rodriguez', role: 'GB', constructor: 'Williams' },
-  { id: 'D070', name: 'Manny Partida', role: 'GB', constructor: 'Williams' },
-  { id: 'D071', name: 'Josh Umali', role: 'GB', constructor: 'Williams' },
-  { id: 'D072', name: 'Marlene Hernandez', role: 'Ops', constructor: 'Williams' },
-  { id: 'D073', name: 'Danny Dunne', role: 'PZ', constructor: 'Racing Bulls' },
-  { id: 'D074', name: 'Perla Hernandez', role: 'PZ', constructor: 'Racing Bulls' },
-  { id: 'D075', name: 'Nofo Keil', role: 'PZ', constructor: 'Racing Bulls' },
-  { id: 'D076', name: 'Ernesto East', role: 'PZ', constructor: 'Racing Bulls' },
-  { id: 'D077', name: 'Raquel Nevarez', role: 'GB', constructor: 'Racing Bulls' },
-  { id: 'D078', name: 'Omar Ruano', role: 'GB', constructor: 'Racing Bulls' },
-  { id: 'D079', name: 'Justin Valero', role: 'GB', constructor: 'Racing Bulls' },
-  { id: 'D080', name: 'Cedric Corner', role: 'GB', constructor: 'Racing Bulls' },
-  { id: 'D081', name: 'Oziel Aldape', role: 'GB', constructor: 'Racing Bulls' },
-  { id: 'D082', name: 'Julio Castaneda', role: 'GB', constructor: 'Racing Bulls' },
-  { id: 'D083', name: 'Avery Rodriguez', role: 'Ops', constructor: 'Racing Bulls' },
-  { id: 'D084', name: 'Karina Castanon', role: 'PZ', constructor: 'Haas' },
-  { id: 'D085', name: 'Bryan Rodriguez', role: 'PZ', constructor: 'Haas' },
-  { id: 'D086', name: 'Martin Palacios', role: 'PZ', constructor: 'Haas' },
-  { id: 'D087', name: 'Arnulfo Romero', role: 'PZ', constructor: 'Haas' },
-  { id: 'D088', name: 'Serdar Kacar', role: 'GB', constructor: 'Haas' },
-  { id: 'D089', name: 'Andrew Paredes Caceres', role: 'GB', constructor: 'Haas' },
-  { id: 'D090', name: 'Richie Rodriguez', role: 'GB', constructor: 'Haas' },
-  { id: 'D091', name: 'Vanessa Velazquez', role: 'GB', constructor: 'Haas' },
-  { id: 'D092', name: 'Evan Corey', role: 'GB', constructor: 'Haas' },
-  { id: 'D093', name: 'Cailin Wimberly', role: 'GB', constructor: 'Haas' },
-  { id: 'D094', name: 'Daniel Camacho', role: 'GB', constructor: 'Haas' },
-  { id: 'D095', name: 'Elaine Rodriguez', role: 'Ops', constructor: 'Haas' },
-  { id: 'D096', name: 'Esmeralda Sonrey', role: 'Ops', constructor: 'Haas' },
-  { id: 'D097', name: 'Nataly Sanchez', role: 'PZ', constructor: 'Cadillac' },
-  { id: 'D098', name: 'Shane Sullivan', role: 'PZ', constructor: 'Cadillac' },
-  { id: 'D099', name: 'Amy Rincon', role: 'PZ', constructor: 'Cadillac' },
-  { id: 'D100', name: 'Priscilla Gonzalez', role: 'PZ', constructor: 'Cadillac' },
-  { id: 'D101', name: 'Rachelle Scarpin', role: 'PZ', constructor: 'Cadillac' },
-  { id: 'D102', name: 'Martin Eduardo Macias', role: 'GB', constructor: 'Cadillac' },
-  { id: 'D103', name: 'Kyle Portman', role: 'GB', constructor: 'Cadillac' },
-  { id: 'D104', name: 'Julio Corpeno', role: 'GB', constructor: 'Cadillac' },
-  { id: 'D105', name: 'Martin Salgado', role: 'GB', constructor: 'Cadillac' },
-  { id: 'D106', name: 'Marco Martinez', role: 'GB', constructor: 'Cadillac' },
-  { id: 'D107', name: 'Marcus Grande', role: 'Ops', constructor: 'Cadillac' },
-  { id: 'D108', name: 'Chelsea Barnum', role: 'Ops', constructor: 'Cadillac' },
+var DRIVERS = [
+  {id:'D001',name:'Ronald Joseph',role:'PZ',constructor:'Ferrari'},
+  {id:'D002',name:'Miqdad Khakoo',role:'PZ',constructor:'Ferrari'},
+  {id:'D003',name:'Eddie Blanck',role:'PZ',constructor:'Ferrari'},
+  {id:'D004',name:'Janet Ayala',role:'PZ',constructor:'Ferrari'},
+  {id:'D005',name:'Chad Gidaya Jr',role:'GB',constructor:'Ferrari'},
+  {id:'D006',name:'Valery Perez Vega',role:'GB',constructor:'Ferrari'},
+  {id:'D007',name:'Regina Talain',role:'GB',constructor:'Ferrari'},
+  {id:'D008',name:'Kazuhiro Itoh',role:'Forum',constructor:'Ferrari'},
+  {id:'D009',name:'Rafa Osoria Jr.',role:'Ops',constructor:'Ferrari'},
+  {id:'D010',name:'Crystal Garcia',role:'Ops',constructor:'Ferrari'},
+  {id:'D011',name:'Brian Nera',role:'PZ',constructor:'McLaren'},
+  {id:'D012',name:'Nick Sturz',role:'PZ',constructor:'McLaren'},
+  {id:'D013',name:'Sergio Brito',role:'PZ',constructor:'McLaren'},
+  {id:'D014',name:'Devon Rodriguez',role:'PZ',constructor:'McLaren'},
+  {id:'D015',name:'Ryon Martinez',role:'GB',constructor:'McLaren'},
+  {id:'D016',name:'Syan Haghiri',role:'GB',constructor:'McLaren'},
+  {id:'D017',name:'Josias Ezquivel Escobar',role:'GB',constructor:'McLaren'},
+  {id:'D018',name:'Cybel Gomez',role:'GB',constructor:'McLaren'},
+  {id:'D019',name:'Crystal Salinas',role:'Forum',constructor:'McLaren'},
+  {id:'D020',name:'Felipe Zuniga',role:'Ops',constructor:'McLaren'},
+  {id:'D021',name:'Ryan Leynes',role:'PZ',constructor:'Red Bull'},
+  {id:'D022',name:'Sydnee Rosner',role:'PZ',constructor:'Red Bull'},
+  {id:'D023',name:'Rachel Byrnes',role:'PZ',constructor:'Red Bull'},
+  {id:'D024',name:'David Gonzalez',role:'PZ',constructor:'Red Bull'},
+  {id:'D025',name:'Christian Badilla',role:'GB',constructor:'Red Bull'},
+  {id:'D026',name:'Ivan Jackson',role:'GB',constructor:'Red Bull'},
+  {id:'D027',name:'Gil Sanchez',role:'GB',constructor:'Red Bull'},
+  {id:'D028',name:'Devin Flores',role:'GB',constructor:'Red Bull'},
+  {id:'D029',name:'Mike Ladia',role:'Forum',constructor:'Red Bull'},
+  {id:'D030',name:'America Del Rivero',role:'Ops',constructor:'Red Bull'},
+  {id:'D031',name:'Brayden Bennett',role:'PZ',constructor:'Mercedes'},
+  {id:'D032',name:'Mechan Williams',role:'PZ',constructor:'Mercedes'},
+  {id:'D033',name:'Mathew Navarrete',role:'PZ',constructor:'Mercedes'},
+  {id:'D034',name:'Matthew Bahena',role:'PZ',constructor:'Mercedes'},
+  {id:'D035',name:'Anthony Lopez',role:'GB',constructor:'Mercedes'},
+  {id:'D036',name:'Jesus Barboza',role:'GB',constructor:'Mercedes'},
+  {id:'D037',name:'Andrew Catalan',role:'GB',constructor:'Mercedes'},
+  {id:'D038',name:'Nick Ramos',role:'GB',constructor:'Mercedes'},
+  {id:'D039',name:'Austin Artinger',role:'Forum',constructor:'Mercedes'},
+  {id:'D040',name:'Lesley Vazquez',role:'Ops',constructor:'Mercedes'},
+  {id:'D041',name:'Krystell Barreto',role:'PZ',constructor:'Aston Martin'},
+  {id:'D042',name:'Malik Smith',role:'PZ',constructor:'Aston Martin'},
+  {id:'D043',name:'Jessie Effendi',role:'PZ',constructor:'Aston Martin'},
+  {id:'D044',name:'Jesus Espana Jr.',role:'PZ',constructor:'Aston Martin'},
+  {id:'D045',name:'Leslie Rincon-Lares',role:'GB',constructor:'Aston Martin'},
+  {id:'D046',name:'Dom Sanchez',role:'GB',constructor:'Aston Martin'},
+  {id:'D047',name:'Robby Sherman',role:'GB',constructor:'Aston Martin'},
+  {id:'D048',name:'Saul Reyes',role:'GB',constructor:'Aston Martin'},
+  {id:'D049',name:'Christian Gutierrez',role:'Forum',constructor:'Aston Martin'},
+  {id:'D050',name:'Ryan Cullen',role:'Ops',constructor:'Aston Martin'},
+  {id:'D051',name:'Phillip Cendana',role:'PZ',constructor:'Alpine'},
+  {id:'D052',name:'Lizz Sarinana',role:'PZ',constructor:'Alpine'},
+  {id:'D053',name:'Johnny Vedolla',role:'PZ',constructor:'Alpine'},
+  {id:'D054',name:'Izzy Arias',role:'PZ',constructor:'Alpine'},
+  {id:'D055',name:'Mayra Gonzalez De La Torres',role:'GB',constructor:'Alpine'},
+  {id:'D056',name:'SunDo Kim',role:'GB',constructor:'Alpine'},
+  {id:'D057',name:'Karamoko Kane',role:'GB',constructor:'Alpine'},
+  {id:'D058',name:'Gavin Tilles',role:'GB',constructor:'Alpine'},
+  {id:'D059',name:'Darnell Burns',role:'Forum',constructor:'Alpine'},
+  {id:'D060',name:'Asher Reeves',role:'Ops',constructor:'Alpine'},
+  {id:'D061',name:'Karissa DeVary',role:'PZ',constructor:'Williams'},
+  {id:'D062',name:'Pedro Negron',role:'PZ',constructor:'Williams'},
+  {id:'D063',name:'Pedro Lozano',role:'PZ',constructor:'Williams'},
+  {id:'D064',name:'Michael Monge',role:'PZ',constructor:'Williams'},
+  {id:'D065',name:'David Mendiola',role:'PZ',constructor:'Williams'},
+  {id:'D066',name:'Ammar Khakoo',role:'GB',constructor:'Williams'},
+  {id:'D067',name:'Justin Drummond',role:'GB',constructor:'Williams'},
+  {id:'D068',name:'Shane Howard',role:'GB',constructor:'Williams'},
+  {id:'D069',name:'Andres Rodriguez',role:'GB',constructor:'Williams'},
+  {id:'D070',name:'Manny Partida',role:'GB',constructor:'Williams'},
+  {id:'D071',name:'Josh Umali',role:'GB',constructor:'Williams'},
+  {id:'D072',name:'Marlene Hernandez',role:'Ops',constructor:'Williams'},
+  {id:'D073',name:'Danny Dunne',role:'PZ',constructor:'Racing Bulls'},
+  {id:'D074',name:'Perla Hernandez',role:'PZ',constructor:'Racing Bulls'},
+  {id:'D075',name:'Nofo Keil',role:'PZ',constructor:'Racing Bulls'},
+  {id:'D076',name:'Ernesto East',role:'PZ',constructor:'Racing Bulls'},
+  {id:'D077',name:'Raquel Nevarez',role:'GB',constructor:'Racing Bulls'},
+  {id:'D078',name:'Omar Ruano',role:'GB',constructor:'Racing Bulls'},
+  {id:'D079',name:'Justin Valero',role:'GB',constructor:'Racing Bulls'},
+  {id:'D080',name:'Cedric Corner',role:'GB',constructor:'Racing Bulls'},
+  {id:'D081',name:'Oziel Aldape',role:'GB',constructor:'Racing Bulls'},
+  {id:'D082',name:'Julio Castaneda',role:'GB',constructor:'Racing Bulls'},
+  {id:'D083',name:'Avery Rodriguez',role:'Ops',constructor:'Racing Bulls'},
+  {id:'D084',name:'Karina Castanon',role:'PZ',constructor:'Haas'},
+  {id:'D085',name:'Bryan Rodriguez',role:'PZ',constructor:'Haas'},
+  {id:'D086',name:'Martin Palacios',role:'PZ',constructor:'Haas'},
+  {id:'D087',name:'Arnulfo Romero',role:'PZ',constructor:'Haas'},
+  {id:'D088',name:'Serdar Kacar',role:'GB',constructor:'Haas'},
+  {id:'D089',name:'Andrew Paredes Caceres',role:'GB',constructor:'Haas'},
+  {id:'D090',name:'Richie Rodriguez',role:'GB',constructor:'Haas'},
+  {id:'D091',name:'Vanessa Velazquez',role:'GB',constructor:'Haas'},
+  {id:'D092',name:'Evan Corey',role:'GB',constructor:'Haas'},
+  {id:'D093',name:'Cailin Wimberly',role:'GB',constructor:'Haas'},
+  {id:'D094',name:'Daniel Camacho',role:'GB',constructor:'Haas'},
+  {id:'D095',name:'Elaine Rodriguez',role:'Ops',constructor:'Haas'},
+  {id:'D096',name:'Esmeralda Sonrey',role:'Ops',constructor:'Haas'},
+  {id:'D097',name:'Nataly Sanchez',role:'PZ',constructor:'Cadillac'},
+  {id:'D098',name:'Shane Sullivan',role:'PZ',constructor:'Cadillac'},
+  {id:'D099',name:'Amy Rincon',role:'PZ',constructor:'Cadillac'},
+  {id:'D100',name:'Priscilla Gonzalez',role:'PZ',constructor:'Cadillac'},
+  {id:'D101',name:'Rachelle Scarpin',role:'PZ',constructor:'Cadillac'},
+  {id:'D102',name:'Martin Eduardo Macias',role:'GB',constructor:'Cadillac'},
+  {id:'D103',name:'Kyle Portman',role:'GB',constructor:'Cadillac'},
+  {id:'D104',name:'Julio Corpeno',role:'GB',constructor:'Cadillac'},
+  {id:'D105',name:'Martin Salgado',role:'GB',constructor:'Cadillac'},
+  {id:'D106',name:'Marco Martinez',role:'GB',constructor:'Cadillac'},
+  {id:'D107',name:'Marcus Grande',role:'Ops',constructor:'Cadillac'},
+  {id:'D108',name:'Chelsea Barnum',role:'Ops',constructor:'Cadillac'},
 ];
 
-const PR_THRESHOLDS = {
-  CAT01: 4, CAT02: 2, CAT03: 3, CAT04: 3, CAT05: 3,
-  CAT06: 4, CAT07: 5, CAT08: 3, CAT09: 2, CAT10: 2, CAT11: 3,
-  CAT12: 1, CAT13: 3, CAT14: 2, CAT15: 2, CAT16: 2, CAT17: 2,
-  CAT18: 5, CAT19: 8, CAT20: 4, CAT21: 2, CAT22: 2, CAT23: 3,
+var CATEGORIES = {
+  PZ: [
+    {id:'CAT01',name:'iPhone AppleCare',mult:3},
+    {id:'CAT02',name:'iPad/Watch/Mac AppleCare',mult:1},
+    {id:'CAT03',name:'Biz Intro',mult:2},
+    {id:'CAT04',name:'Service Sign-up Customer',mult:2,sub:'Count 1 per customer'},
+    {id:'CAT05',name:'Today at Apple Sign-up',mult:1},
+  ],
+  GB: [
+    {id:'CAT06',name:'Completed iPhone or Mac Repair',mult:3},
+    {id:'CAT07',name:'GB Appt',mult:0.5},
+    {id:'CAT08',name:'AppleCare Conversion',mult:3},
+    {id:'CAT09',name:'Conversion',mult:2},
+    {id:'CAT10',name:'Biz Intro',mult:2},
+    {id:'CAT11',name:'Today at Apple Sign-up',mult:1},
+  ],
+  Forum: [
+    {id:'CAT12',name:'Today at Apple Session Led',mult:5},
+    {id:'CAT13',name:'Today at Apple Sign-up',mult:1},
+    {id:'CAT14',name:'Today at Apple Conversion',mult:2},
+    {id:'CAT15',name:'Tip Session Delivered',mult:2},
+    {id:'CAT16',name:'Biz Intro',mult:2},
+    {id:'CAT17',name:'1 Hour of Setup Worked',mult:2},
+  ],
+  Ops: [
+    {id:'CAT18',name:'APU/IDL Fulfilled',mult:0.5},
+    {id:'CAT19',name:'Run',mult:0.125},
+    {id:'CAT20',name:'SFS Fulfilled',mult:0.5},
+    {id:'CAT21',name:'Pallet Broken Down',mult:2},
+    {id:'CAT22',name:'Biz Intro',mult:2},
+    {id:'CAT23',name:'Today at Apple Sign-up',mult:1},
+  ],
 };
 
-// ===================== STATE =====================
-let state = {
-  flexMode: false,
-  selectedRole: null,
-  selectedDriver: null,
-  cart: [], // [{catId, catName, qty, bracket, mult}]
-  dayOpen: true, // fetch from sheet in production
+var PR_THRESHOLDS = {
+  CAT01:4,CAT02:2,CAT03:3,CAT04:3,CAT05:3,
+  CAT06:4,CAT07:5,CAT08:3,CAT09:2,CAT10:2,CAT11:3,
+  CAT12:1,CAT13:3,CAT14:2,CAT15:2,CAT16:2,CAT17:2,
+  CAT18:5,CAT19:8,CAT20:4,CAT21:2,CAT22:2,CAT23:3,
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────
+var S = {
+  dayOpen: true,
   currentDay: 1,
-  offlineQueue: JSON.parse(localStorage.getItem('agp_queue') || '[]'),
+  flexMode: false,
+  role: null,       // selected logging role
+  driver: null,     // selected driver object
+  cart: [],         // [{catId, catName, mult, qty, bracket}]
   prRecords: JSON.parse(localStorage.getItem('agp_pr') || '{}'),
-  driverStats: {}
 };
 
-let idleTimer = null;
+// ─── IDLE ────────────────────────────────────────────────────────────
+var idleTimer = null;
+var IDLE_MS = 50000;
 
-// ===================== IDLE =====================
-function resetIdleTimer() {
+function resetIdle() {
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(showIdle, IDLE_TIMEOUT);
-}
-function showIdle() {
-  document.getElementById('idle-overlay').classList.add('visible');
+  idleTimer = setTimeout(function() {
+    document.getElementById('idle-overlay').classList.add('on');
+  }, IDLE_MS);
 }
 function dismissIdle() {
-  document.getElementById('idle-overlay').classList.remove('visible');
-  resetIdleTimer();
+  document.getElementById('idle-overlay').classList.remove('on');
+  resetIdle();
 }
-document.addEventListener('touchstart', resetIdleTimer, { passive: true });
-document.addEventListener('click', resetIdleTimer);
+document.addEventListener('touchstart', resetIdle, {passive:true});
+document.addEventListener('click', resetIdle);
 
-// ===================== OFFLINE =====================
-function checkOnline() {
-  const badge = document.getElementById('offline-badge');
-  if (!navigator.onLine) {
-    badge.classList.add('visible');
-  } else {
-    badge.classList.remove('visible');
-    flushQueue();
-  }
+// ─── OFFLINE ─────────────────────────────────────────────────────────
+function updateOnline() {
+  var badge = document.getElementById('offline-badge');
+  badge.classList.toggle('on', !navigator.onLine);
 }
-window.addEventListener('online', checkOnline);
-window.addEventListener('offline', checkOnline);
+window.addEventListener('online', updateOnline);
+window.addEventListener('offline', updateOnline);
 
-async function flushQueue() {
-  if (state.offlineQueue.length === 0) return;
-  const toFlush = [...state.offlineQueue];
-  for (const entry of toFlush) {
-    try {
-      await sendToSheet(entry);
-      state.offlineQueue = state.offlineQueue.filter(e => e._id !== entry._id);
-    } catch (e) {}
-  }
-  localStorage.setItem('agp_queue', JSON.stringify(state.offlineQueue));
-}
-
-// ===================== NAVIGATION =====================
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+// ─── SCREEN NAV ──────────────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.add('hidden'); });
   document.getElementById(id).classList.remove('hidden');
-  resetIdleTimer();
+  resetIdle();
 }
 
-function goHome() {
-  state.flexMode = false;
-  state.selectedRole = null;
-  state.selectedDriver = null;
-  state.cart = [];
+// ─── HOME ────────────────────────────────────────────────────────────
+document.getElementById('tap-start').addEventListener('click', function() {
+  if (!S.dayOpen) { show('s-locked'); return; }
+  show('s-role');
+});
+
+// ─── ROLE SCREEN ─────────────────────────────────────────────────────
+document.getElementById('role-grid').addEventListener('click', function(e) {
+  var btn = e.target.closest('.role-btn');
+  if (!btn) return;
+  S.role = btn.dataset.role;
+  document.querySelectorAll('.role-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  setTimeout(function() { goToName(); }, 120);
+});
+
+document.getElementById('flex-banner').addEventListener('click', function() {
+  S.flexMode = !S.flexMode;
   updateFlexUI();
-  showScreen('screen-home');
+});
+
+function updateFlexUI() {
+  var banner = document.getElementById('flex-banner');
+  var check = document.getElementById('flex-check');
+  var sub = document.getElementById('flex-sub');
+  banner.classList.toggle('on', S.flexMode);
+  check.textContent = '✓';
+  sub.textContent = S.flexMode
+    ? 'Flex Mode ON — search all drivers'
+    : 'Tap to enable Flex Mode';
 }
 
-function goToRole() {
-  if (!state.dayOpen) { showScreen('screen-locked'); return; }
-  showScreen('screen-role');
-}
-
-function selectRole(role) {
-  state.selectedRole = role;
-  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
-  document.getElementById('role-' + role).classList.add('selected');
-  setTimeout(() => goToName(), 120);
-}
-
+// ─── NAME SCREEN ─────────────────────────────────────────────────────
 function goToName() {
-  document.getElementById('name-screen-title').textContent = state.flexMode ? 'Who are you? (Flex Mode)' : 'Who are you?';
-  document.getElementById('name-screen-sub').textContent = state.flexMode
-    ? `Logging under ${state.selectedRole} · Points go to your home Constructor`
-    : `Select your name to log as ${state.selectedRole}`;
+  document.getElementById('name-title').textContent = S.flexMode ? 'Who are you? (Flex)' : 'Who are you?';
+  document.getElementById('name-sub').textContent = S.flexMode
+    ? 'Logging under ' + S.role + ' · points go to your Constructor'
+    : 'Select your name — ' + S.role;
   document.getElementById('name-search').value = '';
   renderNames('');
-  showScreen('screen-name');
-  setTimeout(() => document.getElementById('name-search').focus(), 300);
+  show('s-name');
+  setTimeout(function() { document.getElementById('name-search').focus(); }, 300);
 }
 
-function goToCategory() {
-  renderCategories();
-  renderDriverBanner();
-  showScreen('screen-category');
-}
+document.getElementById('name-search').addEventListener('input', function() {
+  renderNames(this.value);
+});
 
-function goToCart() {
-  renderCart();
-  renderDriverBannerCart();
-  showScreen('screen-cart');
-}
-
-// ===================== FLEX MODE =====================
-function toggleFlex() {
-  state.flexMode = !state.flexMode;
-  updateFlexUI();
-}
-function updateFlexUI() {
-  const banner = document.getElementById('flex-banner');
-  const toggle = document.getElementById('flex-toggle');
-  const sub = document.getElementById('flex-sublabel');
-  if (state.flexMode) {
-    banner.classList.add('active');
-    toggle.textContent = '✓';
-    sub.textContent = 'Flex Mode ON — you\'ll search all drivers';
-  } else {
-    banner.classList.remove('active');
-    toggle.textContent = '✓';
-    sub.textContent = 'Tap to enable Flex Mode — log under any bracket';
-  }
-}
-
-// ===================== NAME LIST =====================
-function filterNames() {
-  const q = document.getElementById('name-search').value;
-  renderNames(q);
-}
-
-function renderNames(query) {
-  const list = document.getElementById('name-list');
-  let filtered = DRIVERS.filter(d => {
-    const matchName = d.name.toLowerCase().includes(query.toLowerCase());
-    const matchRole = state.flexMode ? true : d.role === state.selectedRole;
-    return matchName && matchRole;
+function renderNames(q) {
+  var list = document.getElementById('name-list');
+  var filtered = DRIVERS.filter(function(d) {
+    var nameMatch = d.name.toLowerCase().indexOf(q.toLowerCase()) !== -1;
+    var roleMatch = S.flexMode ? true : d.role === S.role;
+    return nameMatch && roleMatch;
   });
 
-  if (filtered.length === 0) {
-    list.innerHTML = '<div class="cart-empty">No matches found</div>';
+  if (!filtered.length) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">No matches found</div>';
     return;
   }
 
-  list.innerHTML = filtered.map(d => {
-    const color = CONSTRUCTORS[d.constructor] || '#888';
-    const flexTag = state.flexMode && d.role !== state.selectedRole
-      ? `<span class="flex-tag">${d.role}</span>` : '';
-    return `
-      <div class="name-item" onclick="selectDriver('${d.id}')">
-        <div class="team-dot" style="background:${color}"></div>
-        <div class="name-info">
-          <div class="name-main">${d.name}${flexTag}</div>
-          <div class="name-team">${d.constructor}</div>
-        </div>
-        <div class="name-arrow">›</div>
-      </div>
-    `;
-  }).join('');
+  list.innerHTML = '';
+  filtered.forEach(function(d) {
+    var color = TEAM_COLORS[d.constructor] || '#888';
+    var flexTag = (S.flexMode && d.role !== S.role)
+      ? '<span class="flex-tag">' + d.role + '</span>' : '';
+    var item = document.createElement('div');
+    item.className = 'name-item';
+    item.innerHTML =
+      '<div class="team-dot" style="background:' + color + '"></div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div class="name-main">' + d.name + flexTag + '</div>' +
+        '<div class="name-team">' + d.constructor + '</div>' +
+      '</div>' +
+      '<div class="name-arrow">›</div>';
+    item.addEventListener('click', function() { selectDriver(d.id); });
+    list.appendChild(item);
+  });
 }
 
 function selectDriver(id) {
-  state.selectedDriver = DRIVERS.find(d => d.id === id);
+  S.driver = DRIVERS.find(function(d) { return d.id === id; });
+  S.cart = []; // clear cart for new driver session
   goToCategory();
 }
 
-// ===================== CATEGORIES =====================
-function renderCategories() {
-  const cats = CATEGORIES[state.selectedRole] || [];
-  const grid = document.getElementById('cat-grid');
-  grid.innerHTML = cats.map(c => `
-    <div class="cat-btn" onclick="addToCart('${c.id}','${c.name}',${c.mult})">
-      <div class="cat-name">${c.name}</div>
-      <div class="cat-mult">×${c.mult}</div>
-      ${c.sub ? `<div style="font-size:10px;color:var(--muted);margin-top:4px;">${c.sub}</div>` : ''}
-    </div>
-  `).join('');
-
-  const title = document.getElementById('cat-screen-title');
-  const sub = document.getElementById('cat-screen-sub');
-  title.textContent = 'What did you do?';
-  sub.textContent = state.flexMode ? `${state.selectedRole} categories · Flex Mode` : `${state.selectedRole} categories`;
+// ─── CATEGORY SCREEN ─────────────────────────────────────────────────
+function goToCategory() {
+  renderDriverBanner('cat-driver-banner');
+  document.getElementById('cat-title').textContent = 'What did you do?';
+  document.getElementById('cat-sub').textContent = S.role + ' categories' + (S.flexMode ? ' · Flex Mode' : '');
+  renderCategoryGrid();
+  show('s-category');
 }
 
+function renderCategoryGrid() {
+  var cats = CATEGORIES[S.role] || [];
+  var grid = document.getElementById('cat-grid');
+  grid.innerHTML = '';
+  cats.forEach(function(cat) {
+    var btn = document.createElement('div');
+    btn.className = 'cat-btn';
+    btn.innerHTML =
+      '<div class="cat-name">' + cat.name + '</div>' +
+      '<div class="cat-mult">×' + cat.mult + '</div>' +
+      (cat.sub ? '<div class="cat-sub">' + cat.sub + '</div>' : '');
+    // Event listener — no inline onclick, no string interpolation issues
+    btn.addEventListener('click', function() {
+      addToCart(cat.id, cat.name, cat.mult);
+    });
+    grid.appendChild(btn);
+  });
+}
+
+// ─── CART ────────────────────────────────────────────────────────────
 function addToCart(catId, catName, mult) {
-  // Parse mult as float in case it comes in as string from onclick
-  const multVal = parseFloat(mult);
-  const existing = state.cart.find(i => i.catId === catId);
+  var existing = S.cart.find(function(i) { return i.catId === catId; });
   if (existing) {
     existing.qty += 1;
   } else {
-    state.cart.push({ catId, catName, qty: 1, bracket: state.selectedRole, mult: multVal });
+    S.cart.push({ catId: catId, catName: catName, mult: mult, qty: 1, bracket: S.role });
   }
   goToCart();
 }
 
-function renderDriverBanner() {
-  const d = state.selectedDriver;
-  if (!d) return;
-  const color = CONSTRUCTORS[d.constructor] || '#888';
-  document.getElementById('driver-banner').innerHTML = `
-    <div class="team-dot" style="background:${color}"></div>
-    <div>
-      <div class="driver-banner-name">${d.name}${state.flexMode ? ' <span class="flex-tag">Flex</span>' : ''}</div>
-      <div class="driver-banner-team">${d.constructor} · ${d.role}</div>
-    </div>
-  `;
+function goToCart() {
+  renderDriverBanner('cart-driver-banner');
+  renderCartList();
+  show('s-cart');
 }
 
-function renderDriverBannerCart() {
-  const d = state.selectedDriver;
-  if (!d) return;
-  const color = CONSTRUCTORS[d.constructor] || '#888';
-  document.getElementById('driver-banner-cart').innerHTML = `
-    <div class="team-dot" style="background:${color}"></div>
-    <div>
-      <div class="driver-banner-name">${d.name}${state.flexMode ? ' <span class="flex-tag">Flex</span>' : ''}</div>
-      <div class="driver-banner-team">${d.constructor} · ${d.role}</div>
-    </div>
-  `;
-}
-
-// ===================== CART =====================
-function renderCart() {
-  const list = document.getElementById('cart-list');
-  if (state.cart.length === 0) {
-    list.innerHTML = '<div class="cart-empty">No items yet — add categories above</div>';
+function renderCartList() {
+  var list = document.getElementById('cart-list');
+  if (!S.cart.length) {
+    list.innerHTML = '<div class="cart-empty">No items yet</div>';
     return;
   }
-  list.innerHTML = state.cart.map((item, idx) => `
-    <div class="cart-item">
-      <div class="name-info">
-        <div class="cart-item-name">${item.catName}</div>
-        <div class="cart-item-bracket">${item.bracket} · ×${item.mult}</div>
-      </div>
-      <div class="qty-ctrl">
-        <div class="qty-btn" onclick="changeQty(${idx}, -1)">−</div>
-        <div class="qty-val">${item.qty}</div>
-        <div class="qty-btn" onclick="changeQty(${idx}, 1)">+</div>
-      </div>
-      <div class="cart-remove" onclick="removeItem(${idx})">✕</div>
-    </div>
-  `).join('');
+  list.innerHTML = '';
+  S.cart.forEach(function(item, idx) {
+    var row = document.createElement('div');
+    row.className = 'cart-item';
+    row.innerHTML =
+      '<div style="flex:1;min-width:0;">' +
+        '<div class="cart-item-name">' + item.catName + '</div>' +
+        '<div class="cart-item-bracket">' + item.bracket + ' · ×' + item.mult + '</div>' +
+      '</div>' +
+      '<div class="qty-ctrl">' +
+        '<div class="qty-btn" data-idx="' + idx + '" data-delta="-1">−</div>' +
+        '<div class="qty-val">' + item.qty + '</div>' +
+        '<div class="qty-btn" data-idx="' + idx + '" data-delta="1">+</div>' +
+      '</div>' +
+      '<div class="cart-remove" data-idx="' + idx + '">✕</div>';
+    list.appendChild(row);
+  });
+
+  // Qty buttons
+  list.querySelectorAll('.qty-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var idx = parseInt(this.dataset.idx);
+      var delta = parseInt(this.dataset.delta);
+      S.cart[idx].qty = Math.max(1, S.cart[idx].qty + delta);
+      renderCartList();
+    });
+  });
+
+  // Remove buttons
+  list.querySelectorAll('.cart-remove').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var idx = parseInt(this.dataset.idx);
+      S.cart.splice(idx, 1);
+      if (!S.cart.length) goToCategory();
+      else renderCartList();
+    });
+  });
 }
 
-function changeQty(idx, delta) {
-  state.cart[idx].qty = Math.max(1, state.cart[idx].qty + delta);
-  renderCart();
-}
+// Add more button
+document.getElementById('add-more-btn').addEventListener('click', function() {
+  goToCategory();
+});
 
-function removeItem(idx) {
-  state.cart.splice(idx, 1);
-  if (state.cart.length === 0) goToCategory();
-  else renderCart();
-}
+// ─── SUBMIT ──────────────────────────────────────────────────────────
+document.getElementById('submit-btn').addEventListener('click', submitCart);
 
-async function loadDriverStats() {
-  // In production: fetch from sheet; using placeholders here
-  document.getElementById('stat-today').textContent = '—';
-  document.getElementById('stat-season').textContent = '—';
-  document.getElementById('stat-team').textContent = '—';
-}
+function submitCart() {
+  if (!S.cart.length || !S.driver) return;
 
-// ===================== SUBMIT =====================
-async function submitCart() {
-  if (state.cart.length === 0) return;
-  const btn = document.getElementById('submit-btn');
+  var btn = document.getElementById('submit-btn');
   btn.textContent = 'Submitting...';
   btn.disabled = true;
 
-  const d = state.selectedDriver;
-  const timestamp = new Date().toISOString();
-  const day = state.currentDay;
+  var timestamp = new Date().toISOString();
+  var entries = S.cart.map(function(item) {
+    return {
+      _id: S.driver.id + '_' + item.catId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+      driverId: S.driver.id,
+      driverName: S.driver.name,
+      constructor: S.driver.constructor,
+      homeRole: S.driver.role,
+      categoryId: item.catId,
+      categoryName: item.catName,
+      qty: item.qty,
+      loggedBracket: item.bracket,
+      mult: item.mult,
+      timestamp: timestamp,
+      day: S.currentDay,
+      points: item.qty * item.mult,
+    };
+  });
 
-  const entries = state.cart.map(item => ({
-    _id: `${d.id}_${item.catId}_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-    driverId: d.id,
-    driverName: d.name,
-    constructor: d.constructor,
-    homeRole: d.role,
-    categoryId: item.catId,
-    categoryName: item.catName,
-    qty: item.qty,
-    loggedBracket: item.bracket,
-    mult: item.mult,
-    timestamp,
-    day,
-    points: item.qty * item.mult
-  }));
-
-  // Check PR before submit
-  let prResult = null;
-  for (const entry of entries) {
-    const key = `${d.id}_${entry.categoryId}`;
-    const prev = state.prRecords[key] || null;
-    const threshold = PR_THRESHOLDS[entry.categoryId] || 1;
-    if (entry.qty > (prev || 0) && entry.qty >= threshold) {
-      prResult = { driver: d.name, category: entry.categoryName, newRecord: entry.qty, prevRecord: prev };
-      state.prRecords[key] = entry.qty;
-      localStorage.setItem('agp_pr', JSON.stringify(state.prRecords));
+  // Check PRs
+  var prResult = null;
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    var key = S.driver.id + '_' + e.categoryId;
+    var prev = S.prRecords[key] || 0;
+    var threshold = PR_THRESHOLDS[e.categoryId] || 1;
+    if (e.qty > prev && e.qty >= threshold) {
+      prResult = { driver: S.driver.name, category: e.categoryName, newRecord: e.qty, prev: prev };
+      S.prRecords[key] = e.qty;
+      localStorage.setItem('agp_pr', JSON.stringify(S.prRecords));
       break;
     }
   }
 
-  // Fire and forget — no-cors means we can't read response, just send it
-  try {
-    for (const entry of entries) {
-      sendToSheet(entry); // intentionally not awaited — no-cors can't be awaited meaningfully
-    }
-  } catch (e) {
-    // Queue for retry
-    state.offlineQueue.push(...entries);
-    localStorage.setItem('agp_queue', JSON.stringify(state.offlineQueue));
-  }
+  var summary = S.cart.map(function(i) { return i.qty + '× ' + i.catName; }).join(', ');
 
-  const cartSummary = state.cart.map(i => `${i.qty}× ${i.catName}`).join(', ');
-
-  // Always reset state and button before navigating
-  state.cart = [];
-  state.selectedDriver = null;
+  // Reset state before async — prevents stuck button if fetch is slow
+  S.cart = [];
+  S.driver = null;
   btn.textContent = 'Submit →';
   btn.disabled = false;
+
+  // Fire and forget — proven pattern
+  sheetPost({ action: 'logEntries', entries: entries })
+    .catch(function() {
+      // Queue locally if offline
+      var q = JSON.parse(localStorage.getItem('agp_outbox') || '[]');
+      q.push.apply(q, entries);
+      localStorage.setItem('agp_outbox', JSON.stringify(q));
+    });
 
   if (prResult) {
     showPR(prResult);
   } else {
-    showConfirm(cartSummary);
+    showConfirm(summary);
   }
 }
 
-function sendToSheet(entry) {
-  if (!SHEET_URL) return;
-  // Use Image beacon — most reliable cross-origin fire-and-forget for Apps Script
-  const payload = encodeURIComponent(JSON.stringify({ action: 'logEntry', entry }));
-  const img = new Image();
-  img.src = SHEET_URL + '?payload=' + payload;
-  // Also try fetch no-cors as backup
-  try {
-    fetch(SHEET_URL + '?payload=' + payload, { method: 'GET', mode: 'no-cors' });
-  } catch(e) {}
-}
-
-// ===================== CONFIRM =====================
+// ─── CONFIRM / PR ────────────────────────────────────────────────────
 function showConfirm(summary) {
   document.getElementById('confirm-detail').textContent = summary;
-  // Reset bar animation
-  const bar = document.getElementById('confirm-bar-fill');
-  bar.style.animation = 'none';
-  bar.offsetHeight;
-  bar.style.animation = 'fillBar 3s linear forwards';
-  showScreen('screen-confirm');
-  setTimeout(() => goHome(), RETURN_TIMEOUT);
+  var fill = document.getElementById('confirm-fill');
+  fill.style.animation = 'none';
+  fill.offsetHeight; // reflow
+  fill.style.animation = 'fillBar 3s linear forwards';
+  show('s-confirm');
+  setTimeout(goHome, 3000);
 }
 
 function showPR(pr) {
-  document.getElementById('pr-driver-name').textContent = pr.driver;
-  document.getElementById('pr-category-name').textContent = pr.category;
-  document.getElementById('pr-number').textContent = pr.newRecord;
-  document.getElementById('pr-prev').textContent = pr.prevRecord
-    ? `Previous best: ${pr.prevRecord}` : 'First time hitting threshold!';
-  const bar = document.getElementById('pr-bar-fill');
-  bar.style.animation = 'none';
-  bar.offsetHeight;
-  bar.style.animation = 'fillBar 5s linear forwards';
-  showScreen('screen-pr');
-  setTimeout(() => goHome(), PR_TIMEOUT);
+  document.getElementById('pr-name').textContent = pr.driver;
+  document.getElementById('pr-cat').textContent = pr.category;
+  document.getElementById('pr-num').textContent = pr.newRecord;
+  document.getElementById('pr-prev').textContent = pr.prev ? 'Previous best: ' + pr.prev : 'First time hitting threshold!';
+  var fill = document.getElementById('pr-fill');
+  fill.style.animation = 'none';
+  fill.offsetHeight;
+  fill.style.animation = 'fillBar 5s linear forwards';
+  show('s-pr');
+  setTimeout(goHome, 5000);
 }
 
-// ===================== INIT =====================
-checkOnline();
-goHome();
-resetIdleTimer();
-// In production: fetch day status from sheet on load
-// fetch(SHEET_URL + '?action=getStatus').then(...).then(s => { state.dayOpen = s.dayOpen; state.currentDay = s.currentDay; })
+// ─── DRIVER BANNER ───────────────────────────────────────────────────
+function renderDriverBanner(elId) {
+  var el = document.getElementById(elId);
+  if (!S.driver) { el.innerHTML = ''; return; }
+  var color = TEAM_COLORS[S.driver.constructor] || '#888';
+  el.innerHTML =
+    '<div class="team-dot" style="background:' + color + '"></div>' +
+    '<div>' +
+      '<div class="db-name">' + S.driver.name + (S.flexMode ? ' <span class="flex-tag">Flex</span>' : '') + '</div>' +
+      '<div class="db-team">' + S.driver.constructor + ' · ' + S.driver.role + '</div>' +
+    '</div>';
+}
+
+// ─── HOME RESET ──────────────────────────────────────────────────────
+function goHome() {
+  S.flexMode = false;
+  S.role = null;
+  S.driver = null;
+  S.cart = [];
+  updateFlexUI();
+  show('s-home');
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────
+function init() {
+  updateOnline();
+  resetIdle();
+  // Fetch day status
+  sheetGet({ action: 'getStatus' })
+    .then(function(s) {
+      S.dayOpen = s.dayOpen;
+      S.currentDay = s.currentDay || 1;
+    })
+    .catch(function() {});
+  // Flush any queued entries
+  var q = JSON.parse(localStorage.getItem('agp_outbox') || '[]');
+  if (q.length && navigator.onLine) {
+    sheetPost({ action: 'logEntries', entries: q })
+      .then(function(r) {
+        if (r.success) localStorage.removeItem('agp_outbox');
+      })
+      .catch(function() {});
+  }
+}
+
+init();
 </script>
 </body>
 </html>
