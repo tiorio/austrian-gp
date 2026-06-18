@@ -140,6 +140,10 @@ html,body{width:100%;height:100dvh;overflow:hidden;background:var(--bg);font-fam
 .log-pts{font-family:'Bitter',serif;font-size:18px;font-weight:900;color:var(--silver-light);flex-shrink:0;}
 .flag-tag{background:rgba(217,119,6,0.2);color:var(--amber);font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;margin-top:3px;display:inline-block;}
 .void-tag{background:rgba(215,38,61,0.15);color:var(--red);font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;margin-top:3px;display:inline-block;}
+.log-void-btn{background:rgba(217,119,6,0.15);border:1px solid rgba(217,119,6,0.4);color:var(--amber);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;cursor:pointer;letter-spacing:0.06em;}
+.log-void-btn:active{background:rgba(217,119,6,0.3);}
+.log-del-btn{background:rgba(215,38,61,0.15);border:1px solid rgba(215,38,61,0.4);color:var(--red);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;cursor:pointer;letter-spacing:0.06em;}
+.log-del-btn:active{background:rgba(215,38,61,0.3);}
 
 /* CONFIRM SHEET */
 #confirm-overlay{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.7);display:none;align-items:flex-end;}
@@ -704,22 +708,52 @@ function renderLog() {
     list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>No entries yet</div>';
     return;
   }
-  list.innerHTML = entries.slice(0, 50).map(function(e) {
+  list.innerHTML = entries.slice(0, 100).forEach(function(e) {
     var color = TEAM_COLORS[e.Constructor] || '#888';
     var voided = e.Voided === 'TRUE';
     var flagged = e.Flagged === 'TRUE' && !voided;
-    return '<div class="log-item ' + (flagged?'flagged':'') + ' ' + (voided?'voided':'') + '">' +
+    var item = document.createElement('div');
+    item.className = 'log-item ' + (flagged?'flagged':'') + ' ' + (voided?'voided':'');
+    item.innerHTML =
       '<div class="tdot" style="background:' + color + ';margin-top:4px;"></div>' +
       '<div class="log-info">' +
-        '<div class="log-driver">' + e.DriverName + '</div>' +
-        '<div class="log-detail">' + e.Qty + '× ' + e.CategoryName + ' · ' + e.LoggedBracket + ' · ' + timeAgo(e.Timestamp) + '</div>' +
-        '<div class="log-detail">' + e.Constructor + '</div>' +
-        (flagged ? '<span class="flag-tag">⚠️ Flagged</span>' : '') +
-        (voided ? '<span class="void-tag">✕ Voided</span>' : '') +
+        '<div class="log-driver">' + (e.DriverName||'') + '</div>' +
+        '<div class="log-detail">' + (e.Qty||0) + 'x ' + (e.CategoryName||'') + ' - ' + (e.LoggedBracket||'') + ' - ' + timeAgo(e.Timestamp) + '</div>' +
+        '<div class="log-detail">' + (e.Constructor||'') + '</div>' +
+        (flagged ? '<span class="flag-tag">Flagged</span>' : '') +
+        (voided ? '<span class="void-tag">Voided</span>' : '') +
       '</div>' +
-      '<div class="log-pts">' + (voided ? '—' : (e.Points||0)) + '</div>' +
-    '</div>';
-  }).join('');
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">' +
+        '<div class="log-pts">' + (voided ? '-' : (e.Points||0)) + '</div>' +
+        (!voided ? '<button class="log-void-btn" data-id="' + (e.EntryID||'') + '">Void</button>' : '') +
+        '<button class="log-del-btn" data-id="' + (e.EntryID||'') + '">Delete</button>' +
+      '</div>';
+    list.appendChild(item);
+  });
+
+  list.querySelectorAll('.log-void-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = this.dataset.id;
+      if (!id) return;
+      showConfirm('Void this entry?', 'Entry stays in log but is removed from scoring.', function() {
+        sheetPost({action:'voidEntry', entryId:id})
+          .then(function() { loadEntries(); renderLog(); showToast('Entry voided'); })
+          .catch(function() { showToast('Error - try again'); });
+      });
+    });
+  });
+
+  list.querySelectorAll('.log-del-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = this.dataset.id;
+      if (!id) return;
+      showConfirm('Permanently delete this entry?', 'This cannot be undone. Entry will be completely removed.', function() {
+        sheetPost({action:'deleteEntry', entryId:id})
+          .then(function() { loadEntries(); renderLog(); showToast('Entry deleted'); })
+          .catch(function() { showToast('Error - try again'); });
+      });
+    });
+  });
 }
 
 // ── CONFIRM OVERLAY ──────────────────────────────────────────

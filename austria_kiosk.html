@@ -458,10 +458,10 @@ var CATEGORIES = {
 };
 
 var PR_THRESHOLDS = {
-  CAT01:4,CAT02:2,CAT03:3,CAT04:3,CAT05:3,
-  CAT06:4,CAT07:5,CAT08:3,CAT09:2,CAT10:2,CAT11:3,
-  CAT12:1,CAT13:3,CAT14:2,CAT15:2,CAT16:2,CAT17:2,
-  CAT18:5,CAT19:8,CAT20:4,CAT21:2,CAT22:2,CAT23:3,
+  'CAT01':6,'CAT02':8,'CAT03':4,'CAT04':6,'CAT05':3,
+  'CAT06':5,'CAT07':30,'CAT08':2,'CAT09':4,'CAT10':3,'CAT11':3,
+  'CAT12':3,'CAT13':5,'CAT14':2,'CAT15':3,'CAT16':2,'CAT17':3,
+  'CAT18':20,'CAT19':60,'CAT20':25,'CAT21':3,'CAT22':2,'CAT23':2,
 };
 
 // ─── STATE ───────────────────────────────────────────────────────────
@@ -740,43 +740,53 @@ function doSubmit(btn) {
     };
   });
 
-  // Check PRs
-  var prResult = null;
-  for (var i = 0; i < entries.length; i++) {
-    var e = entries[i];
-    var key = S.driver.id + '_' + e.categoryId;
-    var prev = S.prRecords[key] || 0;
-    var threshold = PR_THRESHOLDS[e.categoryId] || 1;
-    if (e.qty > prev && e.qty >= threshold) {
-      prResult = { driver: S.driver.name, category: e.categoryName, newRecord: e.qty, prev: prev };
-      S.prRecords[key] = e.qty;
-      localStorage.setItem('agp_pr', JSON.stringify(S.prRecords));
-      break;
-    }
-  }
+    var summary = S.cart.map(function(i) { return i.qty + 'x ' + i.catName; }).join(', ');
+  var driverIdForPR = S.driver.id;
+  var driverNameForPR = S.driver.name;
 
-  var summary = S.cart.map(function(i) { return i.qty + '× ' + i.catName; }).join(', ');
-
-  // Reset state before async — prevents stuck button if fetch is slow
+  // Reset state before async
   S.cart = [];
   S.driver = null;
-  btn.textContent = 'Submit →';
+  btn.textContent = 'Submit ->';
   btn.disabled = false;
 
-  // Fire and forget — proven pattern
+  // Submit entries, then check daily totals for PR
   sheetPost({ action: 'logEntries', entries: entries })
+    .then(function() {
+      return sheetGet({ action: 'getDriverDailyTotals', driverId: driverIdForPR, day: S.currentDay });
+    })
+    .then(function(r) {
+      var prResult = null;
+      if (r && r.totals) {
+        var catIds = Object.keys(r.totals);
+        for (var i = 0; i < catIds.length; i++) {
+          var catId = catIds[i];
+          var dailyTotal = r.totals[catId];
+          var threshold = PR_THRESHOLDS[catId] || 999;
+          if (dailyTotal >= threshold) {
+            var prevBest = r.allTimeBests ? (r.allTimeBests[catId] || 0) : 0;
+            if (dailyTotal > prevBest) {
+              prResult = {
+                driver: driverNameForPR,
+                category: r.catNames ? r.catNames[catId] : catId,
+                newRecord: dailyTotal,
+                prev: prevBest
+              };
+              // Write PR back to sheet
+              sheetPost({ action: 'updatePR', driverId: driverIdForPR, categoryId: catId,
+                value: dailyTotal, driverName: driverNameForPR,
+                categoryName: r.catNames ? r.catNames[catId] : catId });
+              break;
+            }
+          }
+        }
+      }
+      if (prResult) { showPR(prResult); } else { showConfirm(summary); }
+    })
     .catch(function() {
-      // Queue locally if offline
-      var q = JSON.parse(localStorage.getItem('agp_outbox') || '[]');
-      q.push.apply(q, entries);
-      localStorage.setItem('agp_outbox', JSON.stringify(q));
+      // If PR check fails just confirm — never block the flow
+      showConfirm(summary);
     });
-
-  if (prResult) {
-    showPR(prResult);
-  } else {
-    showConfirm(summary);
-  }
 }
 
 // ─── CONFIRM / PR ────────────────────────────────────────────────────
