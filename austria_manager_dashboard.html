@@ -641,6 +641,9 @@ function renderStandings() {
 // ── FLAG QUEUE ───────────────────────────────────────────────
 function renderFlags() {
   var list = document.getElementById('flag-list');
+  ST.flags = (ST.entries || []).filter(function(e) {
+    return (e.Flagged === true || e.Flagged === 'TRUE') && e.Voided !== true && e.Voided !== 'TRUE';
+  });
   var pending = ST.flags.filter(function(f) { return !f._resolved; });
   if (!pending.length) {
     list.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div>Queue clear</div>';
@@ -648,12 +651,12 @@ function renderFlags() {
   }
   list.innerHTML = pending.map(function(f, i) {
     return '<div class="flag-item" id="flag-' + i + '">' +
-      '<div class="flag-type">⚠️ Flagged Entry</div>' +
-      '<div class="flag-driver">' + f.DriverName + '</div>' +
-      '<div class="flag-detail">' + f.Qty + '× ' + f.CategoryName + ' · ' + f.LoggedBracket + ' · ' + timeAgo(f.Timestamp) + '</div>' +
+      '<div class="flag-type">Flagged Entry</div>' +
+      '<div class="flag-driver">' + (f.DriverName||'') + '</div>' +
+      '<div class="flag-detail">' + (f.Qty||0) + 'x ' + (f.CategoryName||'') + ' - ' + (f.LoggedBracket||'') + ' - ' + timeAgo(f.Timestamp) + '</div>' +
       '<div class="flag-actions">' +
-        '<button class="flag-btn approve" data-idx="' + i + '" data-id="' + f.EntryID + '">✓ Approve</button>' +
-        '<button class="flag-btn void" data-idx="' + i + '" data-id="' + f.EntryID + '">✕ Void</button>' +
+        '<button class="flag-btn approve" data-idx="' + i + '" data-id="' + (f.EntryID||'') + '">Approve</button>' +
+        '<button class="flag-btn void" data-idx="' + i + '" data-id="' + (f.EntryID||'') + '">Void</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -701,7 +704,7 @@ function renderLog() {
   var list = document.getElementById('log-list');
   var entries = ST.entries.slice().reverse();
   if (ST.logFilter !== 'all') {
-    if (ST.logFilter === 'flagged') entries = entries.filter(function(e) { return e.Flagged === 'TRUE'; });
+    if (ST.logFilter === 'flagged') entries = entries.filter(function(e) { return e.Flagged === true || e.Flagged === 'TRUE'; });
     else entries = entries.filter(function(e) { return e.LoggedBracket === ST.logFilter || e.HomeRole === ST.logFilter; });
   }
   if (!entries.length) {
@@ -710,8 +713,8 @@ function renderLog() {
   }
   list.innerHTML = entries.slice(0, 100).forEach(function(e) {
     var color = TEAM_COLORS[e.Constructor] || '#888';
-    var voided = e.Voided === 'TRUE';
-    var flagged = e.Flagged === 'TRUE' && !voided;
+    var voided = e.Voided === true || e.Voided === 'TRUE';
+    var flagged = (e.Flagged === true || e.Flagged === 'TRUE') && !voided;
     var item = document.createElement('div');
     item.className = 'log-item ' + (flagged?'flagged':'') + ' ' + (voided?'voided':'');
     item.innerHTML =
