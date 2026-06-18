@@ -321,6 +321,13 @@ html,body{width:100%;height:100dvh;overflow:hidden;background:var(--bg);font-fam
   </div>
 </div>
 
+<div id="drill-overlay" onclick="closeDrill(event)" style="position:fixed;inset:0;z-index:95;background:rgba(0,0,0,0.65);display:none;align-items:flex-end;">
+  <div id="drill-sheet" style="width:100%;background:var(--bg2);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:20px 16px 44px;max-height:82dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
+    <div id="drill-content"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -602,12 +609,16 @@ document.getElementById('stab-row').addEventListener('click', function(e) {
 
 function renderStandings() {
   var list = document.getElementById('standings-list');
+  list.innerHTML = '';
+
   if (currentStandingsTab === 'constructors') {
     var sorted = (ST.constructors || []).slice().sort(function(a,b){return b.pts-a.pts;});
     if (!sorted.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">🏆</div>No data yet</div>'; return; }
-    list.innerHTML = sorted.map(function(c,i) {
+    sorted.forEach(function(c, i) {
       var color = TEAM_COLORS[c.name] || '#888';
-      return '<div class="srow ' + (i===0?'p1':'') + '">' +
+      var row = document.createElement('div');
+      row.className = 'srow ' + (i===0?'p1':'');
+      row.innerHTML =
         '<div class="spos">' + (i+1) + '</div>' +
         '<div>' +
           '<div style="display:flex;align-items:center;gap:8px;">' +
@@ -615,15 +626,21 @@ function renderStandings() {
             '<div class="sname">' + c.name + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="spts">' + (c.pts||0) + '</div>' +
-      '</div>';
-    }).join('');
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div class="spts">' + (c.pts||0) + '</div>' +
+          '<div style="color:var(--muted);font-size:16px;">›</div>' +
+        '</div>';
+      row.addEventListener('click', function() { openConstructorDrill(c.name); });
+      list.appendChild(row);
+    });
   } else {
     var drivers = (ST.drivers[currentStandingsTab] || []).slice().sort(function(a,b){return b.pts-a.pts;});
     if (!drivers.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">🏎️</div>No entries yet</div>'; return; }
-    list.innerHTML = drivers.map(function(d,i) {
+    drivers.forEach(function(d, i) {
       var color = TEAM_COLORS[d.constructor] || '#888';
-      return '<div class="srow ' + (i===0?'p1':'') + '">' +
+      var row = document.createElement('div');
+      row.className = 'srow ' + (i===0?'p1':'');
+      row.innerHTML =
         '<div class="spos">' + (i+1) + '</div>' +
         '<div>' +
           '<div style="display:flex;align-items:center;gap:8px;">' +
@@ -632,10 +649,130 @@ function renderStandings() {
           '</div>' +
           '<div class="steam">' + d.constructor + '</div>' +
         '</div>' +
-        '<div class="spts">' + (d.pts||0) + '</div>' +
-      '</div>';
-    }).join('');
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div class="spts">' + (d.pts||0) + '</div>' +
+          '<div style="color:var(--muted);font-size:16px;">›</div>' +
+        '</div>';
+      row.addEventListener('click', function() { openDriverDrill(d.name, d.constructor); });
+      list.appendChild(row);
+    });
   }
+}
+
+// ── DRILL-DOWN ───────────────────────────────────────────────
+function openDrill(html) {
+  var content = document.getElementById('drill-content');
+  content.innerHTML = html;
+  document.getElementById('drill-overlay').style.display = 'flex';
+  // Attach click handlers for member rows
+  content.querySelectorAll('.member-drill-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+      openDriverDrill(this.dataset.name, this.dataset.constructor);
+    });
+  });
+}
+
+function closeDrill(e) {
+  if (e.target === document.getElementById('drill-overlay')) {
+    document.getElementById('drill-overlay').style.display = 'none';
+  }
+}
+
+function openConstructorDrill(name) {
+  var color = TEAM_COLORS[name] || '#888';
+  var constructorEntries = (ST.entries || []).filter(function(e) {
+    return e.Constructor === name && e.Voided !== true && e.Voided !== 'TRUE';
+  });
+
+  // Get unique drivers and their totals
+  var driverMap = {};
+  constructorEntries.forEach(function(e) {
+    if (!driverMap[e.DriverID]) {
+      driverMap[e.DriverID] = { name: e.DriverName, role: e.HomeRole, pts: 0 };
+    }
+    driverMap[e.DriverID].pts += parseFloat(e.Points || 0);
+  });
+
+  var members = Object.values(driverMap).sort(function(a,b) { return b.pts - a.pts; });
+  var total = members.reduce(function(sum, m) { return sum + m.pts; }, 0);
+
+  var html = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">' +
+    '<div style="width:12px;height:12px;border-radius:50%;background:' + color + '"></div>' +
+    '<div style="font-family:Bitter,serif;font-size:20px;font-weight:900;color:var(--silver-light);">' + name + '</div>' +
+  '</div>' +
+  '<div style="font-size:13px;color:var(--muted);margin-bottom:16px;">' + total.toFixed(1).replace('.0','') + ' season pts — tap a driver for breakdown</div>';
+
+  if (!members.length) {
+    html += '<div style="color:var(--muted);font-size:14px;">No entries yet</div>';
+  } else {
+    var memberListHTML = '';
+    members.forEach(function(m) {
+      memberListHTML += '<div class="srow member-drill-row" data-name="' + m.name.replace(/"/g,'&quot;') + '" data-constructor="' + name.replace(/"/g,'&quot;') + '" style="cursor:pointer;">' +
+        '<div></div>' +
+        '<div>' +
+          '<div style="font-family:Bitter,serif;font-size:15px;color:var(--silver-light);">' + m.name + '</div>' +
+          '<div style="font-size:12px;color:var(--muted);">' + m.role + '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<div style="font-family:Bitter,serif;font-size:18px;font-weight:900;color:var(--silver-light);">' + m.pts.toFixed(1).replace('.0','') + '</div>' +
+          '<div style="color:var(--muted);font-size:16px;">&#8250;</div>' +
+        '</div>' +
+      '</div>';
+    });
+    html += memberListHTML;
+  }
+
+  html += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">' +
+    '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Season Total</div>' +
+    '<div style="font-family:Bitter,serif;font-size:24px;font-weight:900;color:var(--silver-light);">' + total.toFixed(1).replace('.0','') + ' pts</div>' +
+  '</div>';
+
+  openDrill(html);
+}
+
+function openDriverDrill(driverName, constructorName) {
+  var color = TEAM_COLORS[constructorName] || '#888';
+  var driverEntries = (ST.entries || []).filter(function(e) {
+    return e.DriverName === driverName && e.Voided !== true && e.Voided !== 'TRUE';
+  });
+
+  // Group by category
+  var catMap = {};
+  driverEntries.forEach(function(e) {
+    if (!catMap[e.CategoryID]) {
+      catMap[e.CategoryID] = { name: e.CategoryName, qty: 0, pts: 0 };
+    }
+    catMap[e.CategoryID].qty += parseInt(e.Qty || 0);
+    catMap[e.CategoryID].pts += parseFloat(e.Points || 0);
+  });
+
+  var cats = Object.values(catMap).sort(function(a,b) { return b.pts - a.pts; });
+  var totalPts = cats.reduce(function(sum, c) { return sum + c.pts; }, 0);
+
+  var html = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">' +
+    '<div style="width:10px;height:10px;border-radius:50%;background:' + color + '"></div>' +
+    '<div style="font-family:Bitter,serif;font-size:20px;font-weight:900;color:var(--silver-light);">' + driverName + '</div>' +
+  '</div>' +
+  '<div style="font-size:13px;color:var(--muted);margin-bottom:16px;">' + (constructorName||'') + ' — Season: ' + totalPts.toFixed(1).replace('.0','') + ' pts</div>';
+
+  if (!cats.length) {
+    html += '<div style="color:var(--muted);font-size:14px;">No entries yet</div>';
+  } else {
+    html += '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Season Breakdown</div>';
+    cats.forEach(function(c) {
+      html += '<div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">' +
+        '<div style="font-size:14px;color:var(--silver);">' + c.name + '</div>' +
+        '<div style="font-size:14px;color:var(--muted);text-align:right;">' + c.qty + '×</div>' +
+        '<div style="font-family:Bitter,serif;font-size:16px;font-weight:700;color:var(--silver-light);text-align:right;min-width:45px;">' + c.pts.toFixed(1).replace('.0','') + ' pts</div>' +
+      '</div>';
+    });
+    html += '<div style="margin-top:14px;">' +
+      '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Season Total</div>' +
+      '<div style="font-family:Bitter,serif;font-size:24px;font-weight:900;color:var(--silver-light);">' + totalPts.toFixed(1).replace('.0','') + ' pts</div>' +
+    '</div>';
+  }
+
+  openDrill(html);
 }
 
 // ── FLAG QUEUE ───────────────────────────────────────────────
