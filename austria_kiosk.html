@@ -695,8 +695,31 @@ function submitCart() {
   if (!S.cart.length || !S.driver) return;
 
   var btn = document.getElementById('submit-btn');
-  btn.textContent = 'Submitting...';
+  btn.textContent = 'Checking...';
   btn.disabled = true;
+
+  // Re-check day status before every submission
+  sheetGet({ action: 'getStatus' })
+    .then(function(s) {
+      S.dayOpen = s.dayOpen === true || s.dayOpen === 'TRUE';
+      S.currentDay = s.currentDay || 1;
+      if (!S.dayOpen) {
+        btn.textContent = 'Submit ->';
+        btn.disabled = false;
+        goHome();
+        show('s-locked');
+        return;
+      }
+      doSubmit(btn);
+    })
+    .catch(function() {
+      // If status check fails, proceed anyway
+      doSubmit(btn);
+    });
+}
+
+function doSubmit(btn) {
+  btn.textContent = 'Submitting...';
 
   var timestamp = new Date().toISOString();
   var entries = S.cart.map(function(item) {
@@ -807,13 +830,17 @@ function goHome() {
 function init() {
   updateOnline();
   resetIdle();
-  // Fetch day status
-  sheetGet({ action: 'getStatus' })
-    .then(function(s) {
-      S.dayOpen = s.dayOpen;
-      S.currentDay = s.currentDay || 1;
-    })
-    .catch(function() {});
+  // Fetch day status and poll every 60 seconds
+  function refreshStatus() {
+    sheetGet({ action: 'getStatus' })
+      .then(function(s) {
+        S.dayOpen = s.dayOpen === true || s.dayOpen === 'TRUE';
+        S.currentDay = s.currentDay || 1;
+      })
+      .catch(function() {});
+  }
+  refreshStatus();
+  setInterval(refreshStatus, 60000);
   // Flush any queued entries
   var q = JSON.parse(localStorage.getItem('agp_outbox') || '[]');
   if (q.length && navigator.onLine) {
