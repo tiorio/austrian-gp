@@ -137,7 +137,7 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-fam
 
 <div class="board">
   <div class="col">
-    <div><div class="sec-head"><span class="sec-label">🏆 Constructor's Championship</span><span class="sec-sub">Season</span></div></div>
+    <div><div class="sec-head"><span class="sec-label">🏎️ Today's Race</span><span class="sec-sub" id="today-label">Day 1</span></div></div>
     <div class="con-list" id="con-list"></div>
     <div><div class="sec-head" style="margin-top:4px;"><span class="sec-label">⚡ Latest Submission</span></div></div>
     <div class="spotlight" id="spotlight">
@@ -155,7 +155,7 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-fam
   <div class="col">
     <div>
       <div class="sec-head">
-        <span class="sec-label">🏎️ Driver's Championship</span>
+        <span class="sec-label">🏆 Season Championship</span>
         <div class="pip-row">
           <div class="pip active" id="pip-0"></div>
           <div class="pip" id="pip-1"></div>
@@ -216,6 +216,9 @@ function fetchData() {
       if (fresh.spotlight) showSpotlight(fresh.spotlight);
       renderAll();
       document.getElementById('last-update').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      // Update today label
+      var todayEl = document.getElementById('today-label');
+      if (todayEl) todayEl.textContent = 'Day ' + (fresh.day||1) + ' Raw Scores';
     })
     .catch(function(e) {
       console.warn('Fetch failed:', e);
@@ -234,7 +237,7 @@ function renderAll() {
 // ── CONSTRUCTORS ─────────────────────────────────────────────
 function renderConstructors() {
   var list = document.getElementById('con-list');
-  var sorted = liveData.constructors.slice().sort(function(a,b){return b.pts-a.pts;});
+  var sorted = (liveData.seasonConstructors || liveData.constructors).slice().sort(function(a,b){return b.pts-a.pts;});
   var maxPts = sorted[0] ? sorted[0].pts : 1;
   if (maxPts === 0) maxPts = 1;
 
@@ -264,6 +267,8 @@ function renderDrivers() {
   });
 
   var table = document.getElementById('driver-table');
+  // Right column shows season drivers
+  var driverSource = liveData.seasonDrivers || liveData.drivers;
   var brackets = bracketView === 0
     ? [{label:'Product Zone',key:'PZ'}]
     : bracketView === 1
@@ -271,7 +276,7 @@ function renderDrivers() {
     : [{label:'Forum',key:'Forum'},{label:'Operations',key:'Ops'}];
 
   table.innerHTML = brackets.map(function(b) {
-    var drivers = (liveData.drivers[b.key] || []).slice(0,10);
+    var drivers = (driverSource[b.key] || []).slice(0,10);
     if (!drivers.length) {
       return '<div class="bracket-hdr">' + b.label + '</div>' +
         '<div style="color:var(--muted);font-size:13px;padding:8px 10px;">No entries yet</div>';
@@ -341,7 +346,7 @@ function detectOvertakes(prev, next) {
 
 // ── TICKER ───────────────────────────────────────────────────
 function buildTicker() {
-  var sorted = liveData.constructors.slice().sort(function(a,b){return b.pts-a.pts;});
+  var sorted = (liveData.seasonConstructors || liveData.constructors).slice().sort(function(a,b){return b.pts-a.pts;});
   var parts = sorted.slice(0,5).map(function(c,i) {
     return 'P'+(i+1)+': '+c.name+' '+(c.pts||0)+'pts';
   });
