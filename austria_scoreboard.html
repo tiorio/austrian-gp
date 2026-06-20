@@ -12,98 +12,107 @@
 :root {
   --bg:#0a1f16;--bg2:#0f2a1e;--bg3:#142f22;
   --silver:#c9d2d6;--silver-light:#eef2f0;
-  --red:#d7263d;--gold:#c8a84b;
+  --red:#d7263d;--gold:#c8a84b;--bronze:#cd7f32;
   --muted:rgba(201,210,214,0.45);
-  --border:rgba(201,210,214,0.12);
-  --card:rgba(255,255,255,0.04);
+  --border:rgba(201,210,214,0.14);
+  --card:rgba(255,255,255,0.045);
+  --green:#4ce88a;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-family:'Barlow Condensed',sans-serif;color:var(--silver);}
+@media (prefers-reduced-motion: reduce){*{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}}
 
-.checker{position:fixed;top:0;left:0;right:0;height:8px;z-index:100;background:repeating-linear-gradient(90deg,#fff 0,#fff 16px,#000 16px,#000 32px);opacity:0.8;}
-.checker-b{position:fixed;bottom:0;left:0;right:0;height:8px;z-index:100;background:repeating-linear-gradient(90deg,#fff 0,#fff 16px,#000 16px,#000 32px);opacity:0.8;}
+.checker{position:fixed;top:0;left:0;right:0;height:10px;z-index:100;background:repeating-linear-gradient(90deg,#fff 0,#fff 18px,#000 18px,#000 36px);opacity:0.85;}
+.checker-b{position:fixed;bottom:0;left:0;right:0;height:10px;z-index:100;background:repeating-linear-gradient(90deg,#fff 0,#fff 18px,#000 18px,#000 36px);opacity:0.85;}
 
-/* MOUNTAIN BG */
 .mountain-bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
-.mountain-bg svg{position:absolute;bottom:0;width:100%;height:45%;}
+.mountain-bg svg{position:absolute;bottom:0;width:100%;height:48%;}
 
 /* HEADER */
-.hdr{position:fixed;top:8px;left:0;right:0;z-index:50;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(10,31,22,0.96);border-bottom:1px solid var(--border);}
-.hdr-left{display:flex;align-items:center;gap:12px;}
-.hdr-event{font-family:'Bitter',serif;font-size:18px;font-weight:900;color:var(--silver-light);}
-.hdr-circuit{font-size:13px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
-.hdr-right{display:flex;align-items:center;gap:14px;}
-.live-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1.8s infinite;}
+.hdr{position:fixed;top:10px;left:0;right:0;z-index:50;height:clamp(52px,6vh,76px);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,2.4vw,40px);background:rgba(10,31,22,0.97);border-bottom:1px solid var(--border);}
+.hdr-left{display:flex;align-items:center;gap:clamp(10px,1.2vw,18px);}
+.hdr-event{font-family:'Bitter',serif;font-size:clamp(18px,2.4vh,28px);font-weight:900;color:var(--silver-light);}
+.hdr-circuit{font-size:clamp(12px,1.4vh,16px);color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
+.hdr-right{display:flex;align-items:center;gap:clamp(12px,1.6vw,20px);}
+.live-dot{width:10px;height:10px;border-radius:50%;background:var(--red);animation:pulse 1.8s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
-.day-badge{background:var(--red);color:#fff;font-size:12px;font-weight:700;letter-spacing:0.1em;padding:3px 12px;border-radius:12px;text-transform:uppercase;}
-.last-update{font-size:11px;color:var(--muted);}
+.day-badge{background:var(--red);color:#fff;font-size:clamp(12px,1.4vh,16px);font-weight:700;letter-spacing:0.08em;padding:4px 14px;border-radius:14px;text-transform:uppercase;}
+.last-update{font-size:clamp(11px,1.2vh,14px);color:var(--muted);}
 
-/* LAYOUT */
-.board{position:relative;z-index:10;display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:64px 24px 24px;height:100vh;}
-.col{display:flex;flex-direction:column;gap:14px;overflow:hidden;}
+/* STAGE — one full-screen scene at a time */
+.stage{position:relative;z-index:10;height:100vh;padding:clamp(78px,9vh,106px) clamp(28px,3.2vw,56px) clamp(46px,5vh,62px);display:flex;flex-direction:column;}
+.stage-inner{flex:1;display:flex;flex-direction:column;min-height:0;opacity:1;transition:opacity 0.5s ease;}
+.stage-inner.fade{opacity:0;}
 
-/* SECTION HEAD */
-.sec-head{display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-.sec-label{font-family:'Bitter',serif;font-size:14px;font-weight:700;color:var(--silver-light);letter-spacing:0.04em;text-transform:uppercase;}
-.sec-sub{font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-left:auto;}
+.scene-title{display:flex;align-items:baseline;gap:16px;margin-bottom:clamp(14px,2.2vh,30px);flex-shrink:0;}
+.scene-label{font-family:'Bitter',serif;font-weight:900;font-size:clamp(26px,3.8vh,46px);color:var(--silver-light);text-transform:uppercase;letter-spacing:0.02em;}
+.scene-sub{font-size:clamp(13px,1.6vh,19px);color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-left:auto;}
+.scene-dots{display:flex;gap:8px;align-items:center;}
+.scene-dot{width:9px;height:9px;border-radius:50%;background:var(--border);}
+.scene-dot.active{background:var(--gold);}
 
-/* CONSTRUCTOR TABLE */
-.con-list{display:flex;flex-direction:column;gap:5px;}
-.con-row{display:grid;grid-template-columns:28px 1fr 80px 55px;gap:8px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--card);border:1px solid var(--border);transition:all 0.3s;}
-.con-row.p1{border-color:var(--gold);background:rgba(200,168,75,0.08);}
-.con-row.p2{border-color:var(--silver);background:rgba(201,210,214,0.05);}
-.con-row.p3{border-color:#cd7f32;background:rgba(205,127,50,0.05);}
-.con-pos{font-family:'Bitter',serif;font-size:16px;font-weight:900;color:var(--muted);text-align:center;}
-.con-row.p1 .con-pos{color:var(--gold);}
-.con-row.p2 .con-pos{color:var(--silver);}
-.con-row.p3 .con-pos{color:#cd7f32;}
-.con-name{font-family:'Bitter',serif;font-size:13px;font-weight:700;color:var(--silver-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.con-bar-wrap{height:3px;background:var(--border);border-radius:2px;margin-top:4px;}
-.con-bar-fill{height:100%;border-radius:2px;transition:width 0.6s ease;}
-.con-pts{font-family:'Bitter',serif;font-size:18px;font-weight:900;color:var(--silver-light);text-align:right;}
-.con-delta{font-size:11px;color:var(--muted);text-align:right;}
-.con-delta.up{color:#4ce88a;}
+.row-list{display:flex;flex-direction:column;gap:clamp(8px,1.3vh,18px);flex:1;justify-content:flex-start;min-height:0;}
+.row-list.tight{gap:clamp(4px,0.7vh,9px);}
 
-/* SPOTLIGHT */
-.spotlight{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;transition:all 0.4s;position:relative;overflow:hidden;}
-.spotlight.flash{border-color:var(--gold);background:rgba(200,168,75,0.08);}
-.spotlight-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;}
-.spotlight-driver{font-family:'Bitter',serif;font-size:22px;font-weight:900;color:var(--silver-light);}
-.spotlight-meta{font-size:13px;color:var(--muted);margin-top:4px;}
-.spotlight-cat{font-size:16px;color:var(--silver);margin-top:6px;font-weight:600;}
-.spotlight-time{position:absolute;top:14px;right:16px;font-size:11px;color:var(--muted);}
-.spotlight-empty{color:var(--muted);font-size:14px;font-style:italic;}
-.pr-pill{background:var(--red);color:#fff;font-size:10px;font-weight:700;letter-spacing:0.08em;padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;}
+/* CONSTRUCTOR HERO ROWS */
+.hero-row{display:grid;grid-template-columns:clamp(46px,5.2vw,78px) 1fr clamp(100px,10vw,160px);align-items:center;gap:clamp(12px,1.6vw,24px);padding:clamp(6px,1vh,13px) clamp(16px,1.8vw,26px);border-radius:12px;background:var(--card);border:1.5px solid var(--border);flex:1;}
+.hero-row.p1{border-color:var(--gold);background:rgba(200,168,75,0.10);}
+.hero-row.p2{border-color:var(--silver);background:rgba(201,210,214,0.06);}
+.hero-row.p3{border-color:var(--bronze);background:rgba(205,127,50,0.08);}
+.hero-pos{font-family:'Bitter',serif;font-weight:900;font-size:clamp(22px,3.6vh,50px);color:var(--muted);text-align:center;}
+.hero-row.p1 .hero-pos{color:var(--gold);}
+.hero-row.p2 .hero-pos{color:var(--silver-light);}
+.hero-row.p3 .hero-pos{color:var(--bronze);}
+.hero-name-wrap{min-width:0;}
+.hero-name{font-family:'Bitter',serif;font-weight:900;font-size:clamp(18px,3.1vh,38px);color:var(--silver-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hero-bar-wrap{height:clamp(3px,0.5vh,6px);background:var(--border);border-radius:4px;margin-top:clamp(4px,0.6vh,8px);}
+.hero-bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease;}
+.hero-pts{font-family:'Bitter',serif;font-weight:900;font-size:clamp(20px,3.4vh,44px);color:var(--silver-light);text-align:right;}
+.hero-delta{font-size:clamp(10px,1.1vh,13px);color:var(--green);text-align:right;margin-top:2px;}
 
-/* DRIVER STANDINGS */
-.bracket-tabs{display:flex;gap:8px;margin-bottom:10px;}
-.btab{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px;border:1px solid var(--border);color:var(--muted);transition:all 0.3s;}
-.btab.active{background:var(--red);border-color:var(--red);color:#fff;}
-.pip-row{display:flex;gap:6px;align-items:center;margin-left:auto;}
-.pip{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all 0.3s;}
-.pip.active{background:var(--gold);}
-.driver-table{flex:1;overflow-y:auto;}
-.drv-row{display:grid;grid-template-columns:28px 1fr 55px;gap:8px;align-items:center;padding:7px 10px;border-radius:7px;margin-bottom:4px;background:var(--card);border:1px solid var(--border);}
-.drv-row.p1{border-color:var(--gold);}
-.drv-pos{font-family:'Bitter',serif;font-size:15px;font-weight:900;color:var(--muted);text-align:center;}
-.drv-row.p1 .drv-pos{color:var(--gold);}
-.drv-name{font-family:'Bitter',serif;font-size:14px;color:var(--silver-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.drv-team{font-size:11px;color:var(--muted);}
-.drv-pts{font-family:'Bitter',serif;font-size:16px;font-weight:900;color:var(--silver-light);text-align:right;}
-.bracket-hdr{font-family:'Bitter',serif;font-size:13px;font-weight:700;color:var(--silver);text-transform:uppercase;letter-spacing:0.08em;padding:8px 0 5px;border-top:1px solid var(--border);margin-top:6px;}
-.bracket-hdr:first-child{border-top:none;margin-top:0;padding-top:0;}
-.tdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* DRIVER HERO ROWS */
+.drv-hero-row{display:grid;grid-template-columns:clamp(54px,5.6vw,88px) 1fr clamp(120px,12vw,190px);align-items:center;gap:clamp(14px,1.8vw,28px);padding:calc(clamp(9px,1.3vh,16px) * var(--scale,1)) clamp(18px,2vw,28px);border-radius:14px;background:var(--card);border:1.5px solid var(--border);flex:1;}
+.drv-hero-row.p1{border-color:var(--gold);background:rgba(200,168,75,0.08);}
+.drv-hero-pos{font-family:'Bitter',serif;font-weight:900;font-size:calc(clamp(26px,4.4vh,58px) * var(--scale,1));color:var(--muted);text-align:center;}
+.drv-hero-row.p1 .drv-hero-pos{color:var(--gold);}
+.drv-hero-name-row{display:flex;align-items:center;gap:clamp(8px,1vw,14px);min-width:0;}
+.tdot-lg{width:calc(clamp(11px,1.5vh,18px) * var(--scale,1));height:calc(clamp(11px,1.5vh,18px) * var(--scale,1));border-radius:50%;flex-shrink:0;}
+.drv-hero-name{font-family:'Bitter',serif;font-weight:900;font-size:calc(clamp(24px,4.2vh,58px) * var(--scale,1));color:var(--silver-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.drv-hero-team{font-size:calc(clamp(12px,1.5vh,19px) * var(--scale,1));color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:2px;}
+.drv-hero-pts{font-family:'Bitter',serif;font-weight:900;font-size:calc(clamp(28px,4.6vh,64px) * var(--scale,1));color:var(--silver-light);text-align:right;}
+
+.dense-group{flex:1;display:flex;flex-direction:column;min-height:0;}
+.dense-hdr{font-family:'Bitter',serif;font-size:clamp(14px,1.8vh,20px);font-weight:700;color:var(--silver);text-transform:uppercase;letter-spacing:0.08em;padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.empty-note{color:var(--muted);font-size:calc(clamp(14px,2vh,20px) * var(--scale,1));font-style:italic;padding:10px 4px;}
 
 /* TICKER */
-.ticker{position:fixed;bottom:8px;left:0;right:0;z-index:50;height:26px;overflow:hidden;background:rgba(10,31,22,0.92);border-top:1px solid var(--border);display:flex;align-items:center;}
-.ticker-lbl{background:var(--red);color:#fff;font-size:11px;font-weight:700;letter-spacing:0.1em;padding:0 12px;height:100%;display:flex;align-items:center;flex-shrink:0;text-transform:uppercase;}
+.ticker{position:fixed;bottom:10px;left:0;right:0;z-index:50;height:clamp(28px,3.4vh,38px);overflow:hidden;background:rgba(10,31,22,0.94);border-top:1px solid var(--border);display:flex;align-items:center;}
+.ticker-lbl{background:var(--red);color:#fff;font-size:clamp(11px,1.3vh,14px);font-weight:700;letter-spacing:0.1em;padding:0 14px;height:100%;display:flex;align-items:center;flex-shrink:0;text-transform:uppercase;}
 .ticker-track{overflow:hidden;flex:1;}
-.ticker-inner{white-space:nowrap;font-size:12px;color:var(--muted);letter-spacing:0.06em;animation:scroll 40s linear infinite;}
+.ticker-inner{white-space:nowrap;font-size:clamp(13px,1.5vh,17px);color:var(--muted);letter-spacing:0.06em;animation:scroll 40s linear infinite;}
 @keyframes scroll{0%{transform:translateX(100vw);}100%{transform:translateX(-100%);}}
 
-/* OVERTAKE */
-.overtake{position:fixed;top:64px;right:20px;z-index:150;background:var(--red);color:#fff;padding:8px 16px;border-radius:8px;font-family:'Bitter',serif;font-size:14px;font-weight:700;opacity:0;transition:opacity 0.3s;pointer-events:none;}
-.overtake.on{opacity:1;}
+/* FULL-SCREEN INTERRUPTS */
+.interrupt{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;background:#07140e;opacity:0;pointer-events:none;transition:opacity 0.4s ease;padding:40px;}
+.interrupt.on{opacity:1;pointer-events:auto;}
+
+.spot-eyebrow{font-size:clamp(14px,2vh,22px);letter-spacing:0.22em;text-transform:uppercase;color:var(--red);font-weight:700;margin-bottom:clamp(10px,2vh,24px);}
+.spot-name{font-family:'Bitter',serif;font-weight:900;font-size:clamp(52px,10.5vh,140px);color:var(--silver-light);line-height:1.02;}
+.spot-meta{font-size:clamp(17px,2.4vh,30px);color:var(--muted);margin-top:clamp(10px,1.6vh,20px);text-transform:uppercase;letter-spacing:0.08em;}
+.spot-cat{font-family:'Bitter',serif;font-weight:700;font-size:clamp(26px,4.4vh,60px);color:var(--silver);margin-top:clamp(12px,2vh,24px);}
+.spot-pr{display:inline-block;background:var(--red);color:#fff;font-size:clamp(13px,1.7vh,20px);font-weight:700;letter-spacing:0.1em;padding:6px 18px;border-radius:30px;margin-top:clamp(14px,2.2vh,26px);text-transform:uppercase;}
+
+.pf-eyebrow{font-size:clamp(15px,2.2vh,24px);letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:clamp(8px,1.4vh,16px);}
+.pf-pos{font-family:'Bitter',serif;font-weight:900;font-size:clamp(20px,3vh,30px);color:var(--silver);letter-spacing:0.05em;margin-bottom:clamp(18px,3vh,36px);}
+.pf-cards{display:flex;align-items:center;justify-content:center;gap:clamp(20px,3.6vw,56px);}
+.pf-card{display:flex;flex-direction:column;align-items:center;min-width:clamp(180px,22vw,320px);}
+.pf-bar{width:clamp(60px,8vw,110px);height:8px;border-radius:6px;margin-bottom:clamp(14px,2vh,22px);}
+.pf-name{font-family:'Bitter',serif;font-weight:900;font-size:clamp(28px,5.2vh,68px);color:var(--silver-light);line-height:1.05;}
+.pf-pts{font-family:'Bitter',serif;font-weight:900;font-size:clamp(22px,3.8vh,46px);color:var(--muted);margin-top:6px;}
+.pf-card.winner .pf-pts{color:var(--gold);}
+.pf-card.loser{opacity:0.6;}
+.pf-vs{font-family:'Bitter',serif;font-weight:900;font-size:clamp(22px,3.4vh,40px);color:var(--red);padding:0 6px;}
+.pf-margin{font-size:clamp(14px,1.8vh,20px);color:var(--muted);margin-top:clamp(20px,3vh,34px);text-transform:uppercase;letter-spacing:0.1em;}
 </style>
 </head>
 <body>
@@ -135,50 +144,56 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);font-fam
   </div>
 </div>
 
-<div class="board">
-  <div class="col">
-    <div><div class="sec-head"><span class="sec-label">🏎️ Today's Race</span><span class="sec-sub" id="today-label">Day 1</span></div></div>
-    <div class="con-list" id="con-list"></div>
-    <div><div class="sec-head" style="margin-top:4px;"><span class="sec-label">⚡ Latest Submission</span></div></div>
-    <div class="spotlight" id="spotlight">
-      <div class="spotlight-time" id="spotlight-time"></div>
-      <div class="spotlight-lbl">Most Recent Entry</div>
-      <div class="spotlight-empty" id="spotlight-empty">Waiting for first entry...</div>
-      <div id="spotlight-content" style="display:none;">
-        <div class="spotlight-driver" id="spotlight-driver"></div>
-        <div class="spotlight-meta" id="spotlight-meta"></div>
-        <div class="spotlight-cat" id="spotlight-cat"></div>
-      </div>
+<div class="stage">
+  <div class="stage-inner" id="stage-inner">
+    <div class="scene-title">
+      <span class="scene-label" id="scene-label">Season Championship</span>
+      <span class="scene-sub" id="scene-sub"></span>
+      <div class="scene-dots" id="scene-dots"></div>
     </div>
-  </div>
-
-  <div class="col">
-    <div>
-      <div class="sec-head">
-        <span class="sec-label">🏆 Season Championship</span>
-        <div class="pip-row">
-          <div class="pip active" id="pip-0"></div>
-          <div class="pip" id="pip-1"></div>
-          <div class="pip" id="pip-2"></div>
-        </div>
-      </div>
-    </div>
-    <div class="bracket-tabs">
-      <div class="btab active" id="btab-0">Product Zone</div>
-      <div class="btab" id="btab-1">Genius Bar</div>
-      <div class="btab" id="btab-2">Forum + Ops</div>
-    </div>
-    <div class="driver-table" id="driver-table"></div>
+    <div class="row-list" id="row-list"></div>
   </div>
 </div>
 
 <div class="ticker"><div class="ticker-lbl">Live</div><div class="ticker-track"><div class="ticker-inner" id="ticker-inner">Austrian Grand Prix · Red Bull Ring · Spielberg · Championship in progress 🇦🇹</div></div></div>
-<div class="overtake" id="overtake"></div>
+
+<!-- LATEST ENTRY INTERRUPT -->
+<div class="interrupt" id="spot-interrupt">
+  <div class="spot-eyebrow">⚡ Latest Entry</div>
+  <div class="spot-name" id="spot-name"></div>
+  <div class="spot-meta" id="spot-meta"></div>
+  <div class="spot-cat" id="spot-cat"></div>
+  <div class="spot-pr" id="spot-pr" style="display:none;"></div>
+</div>
+
+<!-- PHOTO FINISH INTERRUPT -->
+<div class="interrupt" id="pf-interrupt">
+  <div class="pf-eyebrow" id="pf-eyebrow">📸 Photo Finish</div>
+  <div class="pf-pos" id="pf-pos"></div>
+  <div class="pf-cards">
+    <div class="pf-card winner">
+      <div class="pf-bar" id="pf-bar-winner"></div>
+      <div class="pf-name" id="pf-name-winner"></div>
+      <div class="pf-pts" id="pf-pts-winner"></div>
+    </div>
+    <div class="pf-vs">VS</div>
+    <div class="pf-card loser">
+      <div class="pf-bar" id="pf-bar-loser"></div>
+      <div class="pf-name" id="pf-name-loser"></div>
+      <div class="pf-pts" id="pf-pts-loser"></div>
+    </div>
+  </div>
+  <div class="pf-margin" id="pf-margin"></div>
+</div>
 
 <script>
 var SHEET_URL = 'https://script.google.com/macros/s/AKfycbxoFKqfKifXlryGg99H4hwRDPaw0yBMWjGNuNjX3tYcvoxrkz6Y6N7QNud1A4OJmAqY/exec';
 var REFRESH_MS = 10000;
-var BRACKET_ROTATE_MS = 8000;
+var STAGE_ROTATE_MS = 5000;
+var SPOTLIGHT_HOLD_MS = 5500;
+var PHOTOFINISH_HOLD_MS = 5000;
+var TOP_N = 6;
+var CONSTRUCTOR_N = 10;
 
 var TEAM_COLORS = {
   'Ferrari':'#DC0000','McLaren':'#FF8000','Red Bull':'#1E5BC6',
@@ -199,11 +214,20 @@ var liveData = {
   spotlight: null
 };
 
-var bracketView = 0;
-var bracketTimer = null;
-var prevOrder = [];
+var SCENES = [
+  {label:'Season Championship', sub:'Constructors', type:'constructors'},
+  {label:'Product Zone', sub:'Driver Standings', type:'drivers', key:'PZ'},
+  {label:'Genius Bar', sub:'Driver Standings', type:'drivers', key:'GB'},
+  {label:'Forum + Operations', sub:'Driver Standings', type:'dense', keys:[{key:'Forum',label:'Forum'},{key:'Ops',label:'Operations'}]}
+];
+
+var sceneIndex = 0;
+var stageTimer = null;
 var spotlightEntry = null;
-var spotlightTimer = null;
+var lastSpotlightTs = null;
+
+var interruptActive = false;
+var interruptQueue = [];
 
 // ── FETCH ────────────────────────────────────────────────────
 function fetchData() {
@@ -211,137 +235,214 @@ function fetchData() {
     .then(function(r) { return r.json(); })
     .then(function(fresh) {
       if (!fresh || !fresh.constructors) return;
-      detectOvertakes(liveData.constructors, fresh.constructors);
+      var prevConstructors = liveData.constructors;
+      var prevSorted = (liveData.seasonConstructors || prevConstructors).slice().sort(function(a,b){return b.pts-a.pts;});
+      var nextSorted = (fresh.seasonConstructors || fresh.constructors).slice().sort(function(a,b){return b.pts-a.pts;});
+      detectOvertakes(prevSorted, nextSorted);
+
       liveData = fresh;
-      if (fresh.spotlight) showSpotlight(fresh.spotlight);
-      renderAll();
+
+      if (fresh.spotlight && fresh.spotlight.timestamp !== lastSpotlightTs) {
+        lastSpotlightTs = fresh.spotlight.timestamp;
+        queueInterrupt(function() { showSpotlightInterrupt(fresh.spotlight); });
+      }
+
+      renderActiveScene();
+      buildTicker();
+
       document.getElementById('last-update').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-      // Update today label
-      var todayEl = document.getElementById('today-label');
-      if (todayEl) todayEl.textContent = 'Day ' + (fresh.day||1) + ' Raw Scores';
+      var badge = document.getElementById('day-badge');
+      badge.textContent = 'Day ' + liveData.day + (DAY_LABELS[liveData.day-1] ? ' — ' + DAY_LABELS[liveData.day-1] : '');
     })
     .catch(function(e) {
       console.warn('Fetch failed:', e);
     });
 }
 
-// ── RENDER ALL ───────────────────────────────────────────────
-function renderAll() {
-  renderConstructors();
-  renderDrivers();
-  buildTicker();
-  var badge = document.getElementById('day-badge');
-  badge.textContent = 'Day ' + liveData.day + (DAY_LABELS[liveData.day-1] ? ' — ' + DAY_LABELS[liveData.day-1] : '');
+// ── STAGE ROTATION ──────────────────────────────────────────
+function renderActiveScene() {
+  var scene = SCENES[sceneIndex];
+  document.getElementById('scene-label').textContent = scene.label;
+  document.getElementById('scene-sub').textContent = scene.sub;
+  renderDots();
+
+  var list = document.getElementById('row-list');
+  list.className = scene.type === 'constructors' ? 'row-list tight' : 'row-list';
+  if (scene.type === 'constructors') {
+    list.innerHTML = renderConstructorRows();
+  } else if (scene.type === 'drivers') {
+    list.innerHTML = renderDriverRows(scene.key);
+  } else if (scene.type === 'dense') {
+    list.style.setProperty('--scale', '0.62');
+    list.innerHTML = scene.keys.map(function(g) {
+      return '<div class="dense-group"><div class="dense-hdr">' + g.label + '</div><div class="row-list">' + renderDriverRows(g.key, 4) + '</div></div>';
+    }).join('');
+  }
+  if (scene.type !== 'dense') list.style.removeProperty('--scale');
 }
 
-// ── CONSTRUCTORS ─────────────────────────────────────────────
-function renderConstructors() {
-  var list = document.getElementById('con-list');
-  var sorted = (liveData.seasonConstructors || liveData.constructors).slice().sort(function(a,b){return b.pts-a.pts;});
+function renderDots() {
+  var wrap = document.getElementById('scene-dots');
+  wrap.innerHTML = SCENES.map(function(s, i) {
+    return '<div class="scene-dot' + (i === sceneIndex ? ' active' : '') + '"></div>';
+  }).join('');
+}
+
+function rotateStage() {
+  if (interruptActive) return;
+  var inner = document.getElementById('stage-inner');
+  inner.classList.add('fade');
+  setTimeout(function() {
+    sceneIndex = (sceneIndex + 1) % SCENES.length;
+    renderActiveScene();
+    inner.classList.remove('fade');
+  }, 450);
+}
+
+function restartStageTimer() {
+  clearInterval(stageTimer);
+  stageTimer = setInterval(rotateStage, STAGE_ROTATE_MS);
+}
+
+// ── CONSTRUCTOR ROWS ─────────────────────────────────────────
+function renderConstructorRows() {
+  var sorted = (liveData.seasonConstructors || liveData.constructors).slice().sort(function(a,b){return b.pts-a.pts;}).slice(0, CONSTRUCTOR_N);
   var maxPts = sorted[0] ? sorted[0].pts : 1;
   if (maxPts === 0) maxPts = 1;
 
-  list.innerHTML = sorted.map(function(c, i) {
+  return sorted.map(function(c, i) {
     var pos = i + 1;
     var cls = pos===1?'p1':pos===2?'p2':pos===3?'p3':'';
     var color = TEAM_COLORS[c.name] || '#888';
     var barW = Math.round((c.pts / maxPts) * 100);
-    return '<div class="con-row ' + cls + '">' +
-      '<div class="con-pos">' + pos + '</div>' +
-      '<div>' +
-        '<div class="con-name">' + c.name + '</div>' +
-        '<div class="con-bar-wrap"><div class="con-bar-fill" style="width:' + barW + '%;background:' + color + '"></div></div>' +
+    return '<div class="hero-row ' + cls + '">' +
+      '<div class="hero-pos">' + pos + '</div>' +
+      '<div class="hero-name-wrap">' +
+        '<div class="hero-name">' + c.name + '</div>' +
+        '<div class="hero-bar-wrap"><div class="hero-bar-fill" style="width:' + barW + '%;background:' + color + '"></div></div>' +
       '</div>' +
-      '<div><div class="con-pts">' + c.pts.toFixed(1).replace('.0','') + '</div></div>' +
-      '<div><div class="con-delta ' + (c.delta?'up':'') + '">' + (c.delta||'') + '</div></div>' +
+      '<div>' +
+        '<div class="hero-pts">' + c.pts.toFixed(1).replace('.0','') + '</div>' +
+        (c.delta ? '<div class="hero-delta">' + c.delta + '</div>' : '') +
+      '</div>' +
     '</div>';
   }).join('');
 }
 
-// ── DRIVERS ──────────────────────────────────────────────────
-function renderDrivers() {
-  ['btab-0','btab-1','btab-2'].forEach(function(id,i) {
-    var el = document.getElementById(id);
-    el.classList.toggle('active', i === bracketView);
-    document.getElementById('pip-'+i).classList.toggle('active', i === bracketView);
-  });
-
-  var table = document.getElementById('driver-table');
-  // Right column shows season drivers
+// ── DRIVER ROWS ──────────────────────────────────────────────
+function renderDriverRows(key, count) {
+  count = count || TOP_N;
   var driverSource = liveData.seasonDrivers || liveData.drivers;
-  var brackets = bracketView === 0
-    ? [{label:'Product Zone',key:'PZ'}]
-    : bracketView === 1
-    ? [{label:'Genius Bar',key:'GB'}]
-    : [{label:'Forum',key:'Forum'},{label:'Operations',key:'Ops'}];
-
-  table.innerHTML = brackets.map(function(b) {
-    var drivers = (driverSource[b.key] || []).slice(0,10);
-    if (!drivers.length) {
-      return '<div class="bracket-hdr">' + b.label + '</div>' +
-        '<div style="color:var(--muted);font-size:13px;padding:8px 10px;">No entries yet</div>';
-    }
-    return '<div class="bracket-hdr">' + b.label + '</div>' +
-      drivers.map(function(d,i) {
-        var color = TEAM_COLORS[d.constructor] || '#888';
-        return '<div class="drv-row ' + (i===0?'p1':'') + '">' +
-          '<div class="drv-pos">' + (i+1) + '</div>' +
-          '<div style="min-width:0;">' +
-            '<div style="display:flex;align-items:center;gap:6px;">' +
-              '<div class="tdot" style="background:' + color + '"></div>' +
-              '<div class="drv-name">' + d.name + '</div>' +
-            '</div>' +
-            '<div class="drv-team">' + d.constructor + '</div>' +
-          '</div>' +
-          '<div class="drv-pts">' + (d.pts||0).toFixed(1).replace('.0','') + '</div>' +
-        '</div>';
-      }).join('');
+  var drivers = (driverSource[key] || []).slice(0, count);
+  if (!drivers.length) {
+    return '<div class="empty-note">No entries yet</div>';
+  }
+  return drivers.map(function(d, i) {
+    var color = TEAM_COLORS[d.constructor] || '#888';
+    return '<div class="drv-hero-row ' + (i===0?'p1':'') + '">' +
+      '<div class="drv-hero-pos">' + (i+1) + '</div>' +
+      '<div class="drv-hero-name-row">' +
+        '<div class="tdot-lg" style="background:' + color + '"></div>' +
+        '<div style="min-width:0;">' +
+          '<div class="drv-hero-name">' + d.name + '</div>' +
+          '<div class="drv-hero-team">' + d.constructor + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="drv-hero-pts">' + (d.pts||0).toFixed(1).replace('.0','') + '</div>' +
+    '</div>';
   }).join('');
 }
 
-function rotateBracket() {
-  bracketView = (bracketView + 1) % 3;
-  renderDrivers();
+// ── INTERRUPT QUEUE ──────────────────────────────────────────
+function queueInterrupt(fn) {
+  interruptQueue.push(fn);
+  processQueue();
 }
 
-// ── SPOTLIGHT ────────────────────────────────────────────────
-function showSpotlight(entry) {
-  if (!entry) return;
+function processQueue() {
+  if (interruptActive || !interruptQueue.length) return;
+  interruptActive = true;
+  clearInterval(stageTimer);
+  var job = interruptQueue.shift();
+  job();
+}
+
+function endInterrupt() {
+  interruptActive = false;
+  restartStageTimer();
+  processQueue();
+}
+
+// ── SPOTLIGHT INTERRUPT ──────────────────────────────────────
+function showSpotlightInterrupt(entry) {
   spotlightEntry = entry;
-  var box = document.getElementById('spotlight');
-  document.getElementById('spotlight-empty').style.display = 'none';
-  var content = document.getElementById('spotlight-content');
-  content.style.display = 'block';
-  document.getElementById('spotlight-driver').innerHTML = entry.driverName + (entry.isPR ? '<span class="pr-pill">PR</span>' : '');
-  document.getElementById('spotlight-meta').textContent = (entry.constructor||'') + ' · ' + (entry.loggedBracket||'');
-  document.getElementById('spotlight-cat').textContent = entry.qty + '× ' + entry.categoryName;
-  box.classList.add('flash');
-  setTimeout(function() { box.classList.remove('flash'); }, 800);
-  updateSpotlightTime();
-  clearInterval(spotlightTimer);
-  spotlightTimer = setInterval(updateSpotlightTime, 30000);
+  document.getElementById('spot-name').innerHTML = entry.driverName;
+  document.getElementById('spot-meta').textContent = (entry.constructor||'') + ' · ' + (entry.loggedBracket||'');
+  document.getElementById('spot-cat').textContent = entry.qty + '× ' + entry.categoryName;
+  var prPill = document.getElementById('spot-pr');
+  if (entry.isPR) {
+    var prevText = entry.prPrevRecord ? (' (prev ' + entry.prPrevRecord + ')') : ' (first time hitting threshold)';
+    prPill.textContent = '🏆 New PR — ' + entry.prNewRecord + ' ' + (entry.prCategory || entry.categoryName) + prevText;
+    prPill.style.display = 'inline-block';
+  } else {
+    prPill.style.display = 'none';
+  }
+
+  var box = document.getElementById('spot-interrupt');
+  box.classList.add('on');
+  setTimeout(function() {
+    box.classList.remove('on');
+    setTimeout(endInterrupt, 400);
+  }, SPOTLIGHT_HOLD_MS);
 }
 
-function updateSpotlightTime() {
-  if (!spotlightEntry) return;
-  var diff = Math.floor((Date.now() - new Date(spotlightEntry.timestamp).getTime()) / 1000);
-  var txt = diff < 5 ? 'just now' : diff < 60 ? diff + 's ago' : Math.floor(diff/60) + 'm ago';
-  document.getElementById('spotlight-time').textContent = txt;
-}
-
-// ── OVERTAKE ─────────────────────────────────────────────────
-function detectOvertakes(prev, next) {
-  if (!prev.length || !next.length) return;
+// ── PHOTO FINISH INTERRUPT ───────────────────────────────────
+function detectOvertakes(prevSorted, nextSorted) {
+  if (!prevSorted.length || !nextSorted.length) return;
   var prevMap = {};
-  prev.forEach(function(c,i) { prevMap[c.name] = i; });
-  next.sort(function(a,b){return b.pts-a.pts;}).forEach(function(c,i) {
-    if (prevMap[c.name] !== undefined && prevMap[c.name] > i) {
-      var el = document.getElementById('overtake');
-      el.textContent = '⬆️ ' + c.name + ' moves to P' + (i+1) + '!';
-      el.classList.add('on');
-      setTimeout(function() { el.classList.remove('on'); }, 4000);
+  prevSorted.forEach(function(c, i) { prevMap[c.name] = i; });
+  var prevByIndex = {};
+  prevSorted.forEach(function(c, i) { prevByIndex[i] = c.name; });
+
+  for (var i = 0; i < Math.min(nextSorted.length, 5); i++) {
+    var mover = nextSorted[i];
+    if (prevMap[mover.name] !== undefined && prevMap[mover.name] > i) {
+      var victimName = prevByIndex[i];
+      if (victimName && victimName !== mover.name) {
+        var victim = nextSorted.filter(function(c) { return c.name === victimName; })[0];
+        if (victim) {
+          queueInterrupt(function(pos, m, v) {
+            return function() { showPhotoFinish(pos, m, v); };
+          }(i + 1, mover, victim));
+        }
+      }
+      break; // most significant overtake only per fetch cycle
     }
-  });
+  }
+}
+
+function showPhotoFinish(pos, winner, loser) {
+  var margin = Math.abs((winner.pts||0) - (loser.pts||0));
+  var tight = margin <= 1;
+  document.getElementById('pf-eyebrow').textContent = tight ? '📸 Photo Finish' : '🏁 Overtake!';
+  document.getElementById('pf-pos').textContent = 'BATTLE FOR P' + pos;
+
+  var wColor = TEAM_COLORS[winner.name] || '#888';
+  var lColor = TEAM_COLORS[loser.name] || '#888';
+  document.getElementById('pf-bar-winner').style.background = wColor;
+  document.getElementById('pf-bar-loser').style.background = lColor;
+  document.getElementById('pf-name-winner').textContent = winner.name;
+  document.getElementById('pf-name-loser').textContent = loser.name;
+  document.getElementById('pf-pts-winner').textContent = winner.pts.toFixed(1).replace('.0','') + ' pts';
+  document.getElementById('pf-pts-loser').textContent = loser.pts.toFixed(1).replace('.0','') + ' pts';
+  document.getElementById('pf-margin').textContent = 'Margin: ' + margin.toFixed(1).replace('.0','') + ' pts';
+
+  var box = document.getElementById('pf-interrupt');
+  box.classList.add('on');
+  setTimeout(function() {
+    box.classList.remove('on');
+    setTimeout(endInterrupt, 400);
+  }, PHOTOFINISH_HOLD_MS);
 }
 
 // ── TICKER ───────────────────────────────────────────────────
@@ -355,10 +456,10 @@ function buildTicker() {
 }
 
 // ── INIT ─────────────────────────────────────────────────────
-renderAll();
+renderActiveScene();
 fetchData();
 setInterval(fetchData, REFRESH_MS);
-bracketTimer = setInterval(rotateBracket, BRACKET_ROTATE_MS);
+restartStageTimer();
 </script>
 </body>
 </html>
